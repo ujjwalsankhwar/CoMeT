@@ -126,6 +126,48 @@ for line in file:
 
 file.close()
 
+file = open("4_Core_GCC_LBM_3D.trace", "r")
+
+time_4_GCC_LBM_3D = []
+maxCore_4_GCC_LBM_3D = []
+maxMem_4_GCC_LBM_3D = []
+gradMem_4_GCC_LBM_3D = []
+count_4_GCC_LBM_3D = 0
+
+for line in file:
+	if count_4_GCC_LBM_3D == 0:
+		count_4_GCC_LBM_3D += 1
+		continue
+	arr = [float(i) for i in line.split( )]
+	maxCore_4_GCC_LBM_3D.append(max(arr[0:4]))
+	maxMem_4_GCC_LBM_3D.append(max(arr[4:]))
+	gradMem_4_GCC_LBM_3D.append(max(arr[4:20])-min(arr[4:20]))
+	time_4_GCC_LBM_3D.append(count_4_GCC_LBM_3D)
+	count_4_GCC_LBM_3D += 1
+
+file.close()
+
+file = open("4_Core_LBM_GCC_3D.trace", "r")
+
+time_4_LBM_GCC_3D = []
+maxCore_4_LBM_GCC_3D = []
+maxMem_4_LBM_GCC_3D = []
+gradMem_4_LBM_GCC_3D = []
+count_4_LBM_GCC_3D = 0
+
+for line in file:
+	if count_4_LBM_GCC_3D == 0:
+		count_4_LBM_GCC_3D += 1
+		continue
+	arr = [float(i) for i in line.split( )]
+	maxCore_4_LBM_GCC_3D.append(max(arr[0:4]))
+	maxMem_4_LBM_GCC_3D.append(max(arr[4:]))
+	gradMem_4_LBM_GCC_3D.append(max(arr[4:20])-min(arr[4:20]))
+	time_4_LBM_GCC_3D.append(count_4_LBM_GCC_3D)
+	count_4_LBM_GCC_3D += 1
+
+file.close()
+
 plt.figure(0) 
 plt.plot(time_4_GCC_LBM,maxMem_4_GCC_LBM)
 plt.ylabel('Max Mem Temperature (in C)')
@@ -275,7 +317,7 @@ plt.savefig('32_Core_Grad_LBM_GCC.png')
 plt.figure(18) 
 plt.plot(time_4_GCC_LBM,maxMem_4_GCC_LBM,label = "GCC_LBM")
 plt.plot(time_4_LBM_GCC,maxMem_4_LBM_GCC,label = "LBM_GCC")
-plt.ylabel('Max Core-Mem Temperature (in C)')
+plt.ylabel('Max Mem Temperature (in C)')
 plt.xlabel('Time (in ms)')
 plt.title('Max Mem Temperature vs Time')
 plt.grid()
@@ -285,7 +327,7 @@ plt.savefig('4_Core.png')
 plt.figure(19) 
 plt.plot(time_16_GCC_LBM,maxMem_16_GCC_LBM,label = "GCC_LBM")
 plt.plot(time_16_LBM_GCC,maxMem_16_LBM_GCC,label = "LBM_GCC")
-plt.ylabel('Max Core-Mem Temperature (in C)')
+plt.ylabel('Max Mem Temperature (in C)')
 plt.xlabel('Time (in ms)')
 plt.title('Max Mem Temperature vs Time')
 plt.grid()
@@ -295,7 +337,7 @@ plt.savefig('16_Core.png')
 plt.figure(20) 
 plt.plot(time_32_GCC_LBM,maxMem_32_GCC_LBM,label = "GCC_LBM")
 plt.plot(time_32_LBM_GCC,maxMem_32_LBM_GCC,label = "LBM_GCC")
-plt.ylabel('Max Core-Mem Temperature (in C)')
+plt.ylabel('Max Mem Temperature (in C)')
 plt.xlabel('Time (in ms)')
 plt.title('Max Mem Temperature vs Time')
 plt.grid()
@@ -314,6 +356,32 @@ plt.grid()
 plt.legend()
 plt.title('Temperature Gradient vs Time')
 plt.savefig('4_Core_Grad.png')
+
+plt.figure(22) 
+plt.plot(time_4_GCC_LBM_3D,maxMem_4_GCC_LBM_3D)
+plt.ylabel('Max Mem Temperature (in C)')
+plt.xlabel('Time (in ms)')
+plt.grid()
+plt.title('Max Mem Temperature vs Time')
+plt.savefig('4_Core_3D_Mem_GCC_LBM.png')
+
+plt.figure(23) 
+plt.plot(time_4_LBM_GCC_3D,maxMem_4_LBM_GCC_3D)
+plt.ylabel('Max Mem Temperature (in C)')
+plt.xlabel('Time (in ms)')
+plt.grid()
+plt.title('Max Mem Temperature vs Time')
+plt.savefig('4_Core_3D_Mem_LBM_GCC.png')
+
+plt.figure(24) 
+plt.plot(time_4_GCC_LBM_3D,maxMem_4_GCC_LBM_3D,label = "GCC_LBM")
+plt.plot(time_4_LBM_GCC_3D,maxMem_4_LBM_GCC_3D,label = "LBM_GCC")
+plt.ylabel('Max Mem Temperature (in C)')
+plt.xlabel('Time (in ms)')
+plt.title('Max Mem Temperature vs Time')
+plt.grid()
+plt.legend()
+plt.savefig('4_Core_3D.png')
 
 # plt.figure(3) 
 # plt.plot(time_16,maxMem_16)
