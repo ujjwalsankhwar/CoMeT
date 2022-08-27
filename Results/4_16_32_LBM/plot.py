@@ -41,7 +41,7 @@ for line in file:
 	maxCore_16.append(max(arr[0:16]))
 	maxMem_16.append(max(arr[16:]))
 	gradMem_16.append(max(arr[16:32])-min(arr[16:32]))
-	gradCore_16.append(max(arr[0:4])-min(arr[0:4]))
+	gradCore_16.append(max(arr[0:16])-min(arr[0:16]))
 	time_16.append(count_16)
 	count_16 += 1
 
@@ -64,7 +64,7 @@ for line in file:
 	maxCore_32.append(max(arr[0:32]))
 	maxMem_32.append(max(arr[32:]))
 	gradMem_32.append(max(arr[32:48])-min(arr[32:48]))
-	gradCore_32.append(max(arr[0:4])-min(arr[0:4]))
+	gradCore_32.append(max(arr[0:32])-min(arr[0:32]))
 	time_32.append(count_32)
 	count_32 += 1
 
@@ -73,16 +73,16 @@ file.close()
 directory = ["4_Core","16_Core","32_Core"]
 
 for i in directory:
-	os.mkdir(i)
-	os.mkdir(i+"/Max_Mem_Temperature")
-	os.mkdir(i+"/Max_Core_Temperature")
-	os.mkdir(i+"/Max_Combined_Temperature")
-	os.mkdir(i+"/Max_Core_Temperature_Gradient")
-	os.mkdir(i+"/Max_Mem_Temperature_Gradient")
+	os.makedirs(i, exist_ok=True)
+	os.makedirs(i+"/Max_Mem_Temperature", exist_ok=True)
+	os.makedirs(i+"/Max_Core_Temperature", exist_ok=True)
+	os.makedirs(i+"/Max_Combined_Temperature", exist_ok=True)
+	os.makedirs(i+"/Max_Core_Temperature_Gradient", exist_ok=True)
+	os.makedirs(i+"/Max_Mem_Temperature_Gradient", exist_ok=True)
 
-os.mkdir("4_16_32_Cores")
-os.mkdir("4_16_32_Cores/Max_Mem_Temperature")
-os.mkdir("4_16_32_Cores/Max_Core_Temperature")
+os.makedirs("4_16_32_Cores", exist_ok=True)
+os.makedirs("4_16_32_Cores/Max_Mem_Temperature", exist_ok=True)
+os.makedirs("4_16_32_Cores/Max_Core_Temperature", exist_ok=True)
 
 plt.plot(time_4,maxMem_4)
 plt.ylabel('Max Mem Temperature (in C)')
