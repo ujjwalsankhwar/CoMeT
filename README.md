@@ -29,7 +29,7 @@ Following are the salient features:
 
 ### Cloning the repo
 
-`git clone https://github.com/marg-tools/CoMeT.git` 
+`git clone https://github.com/ujjwalsankhwar/CoMeT.git` 
 
 ### PinPlay
 Download and extract Pinplay 3.2 to the root *CoMeT* directory as ```pin_kit```
