@@ -63,7 +63,7 @@ for line in file:
 	arr = [float(i) for i in line.split( )]
 	maxCore_16_GCC_LBM.append(max(arr[0:16]))
 	maxMem_16_GCC_LBM.append(max(arr[16:]))
-	gradMem_16_GCC_LBM.append(max(arr[16:])-min(arr[16:]))
+	gradMem_16_GCC_LBM.append(max(arr[16:32])-min(arr[16:32]))
 	gradCore_16_GCC_LBM.append(max(arr[0:16])-min(arr[0:16]))
 	time_16_GCC_LBM.append(count_16_GCC_LBM)
 	count_16_GCC_LBM += 1
@@ -86,7 +86,7 @@ for line in file:
 	arr = [float(i) for i in line.split( )]
 	maxCore_16_LBM_GCC.append(max(arr[0:16]))
 	maxMem_16_LBM_GCC.append(max(arr[16:]))
-	gradMem_16_LBM_GCC.append(max(arr[16:])-min(arr[16:]))
+	gradMem_16_LBM_GCC.append(max(arr[16:32])-min(arr[16:32]))
 	gradCore_16_LBM_GCC.append(max(arr[0:16])-min(arr[0:16]))
 	time_16_LBM_GCC.append(count_16_LBM_GCC)
 	count_16_LBM_GCC += 1
@@ -109,7 +109,7 @@ for line in file:
 	arr = [float(i) for i in line.split( )]
 	maxCore_32_GCC_LBM.append(max(arr[0:32]))
 	maxMem_32_GCC_LBM.append(max(arr[32:]))
-	gradMem_32_GCC_LBM.append(max(arr[32:])-min(arr[32:]))
+	gradMem_32_GCC_LBM.append(max(arr[32:48])-min(arr[32:48]))
 	gradCore_32_GCC_LBM.append(max(arr[0:32])-min(arr[0:32]))
 	time_32_GCC_LBM.append(count_32_GCC_LBM)
 	count_32_GCC_LBM += 1
@@ -132,7 +132,7 @@ for line in file:
 	arr = [float(i) for i in line.split( )]
 	maxCore_32_LBM_GCC.append(max(arr[0:32]))
 	maxMem_32_LBM_GCC.append(max(arr[32:]))
-	gradMem_32_LBM_GCC.append(max(arr[32:])-min(arr[32:]))
+	gradMem_32_LBM_GCC.append(max(arr[32:48])-min(arr[32:48]))
 	gradCore_32_LBM_GCC.append(max(arr[0:32])-min(arr[0:32]))
 	time_32_LBM_GCC.append(count_32_LBM_GCC)
 	count_32_LBM_GCC += 1
