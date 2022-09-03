@@ -139,7 +139,53 @@ for line in file:
 
 file.close()
 
-directory = ["4_Core","16_Core","32_Core"]
+file = open("64_Core_GCC_LBM_3Dmem.trace", "r")
+
+time_64_GCC_LBM = []
+maxCore_64_GCC_LBM = []
+maxMem_64_GCC_LBM = []
+gradMem_64_GCC_LBM = []
+gradCore_64_GCC_LBM = []
+count_64_GCC_LBM = 0
+
+for line in file:
+	if count_64_GCC_LBM == 0:
+		count_64_GCC_LBM += 1
+		continue
+	arr = [float(i) for i in line.split( )]
+	maxCore_64_GCC_LBM.append(max(arr[0:64]))
+	maxMem_64_GCC_LBM.append(max(arr[64:]))
+	gradMem_64_GCC_LBM.append(max(arr[64:80])-min(arr[64:80]))
+	gradCore_64_GCC_LBM.append(max(arr[0:64])-min(arr[0:64]))
+	time_64_GCC_LBM.append(count_64_GCC_LBM)
+	count_64_GCC_LBM += 1
+
+file.close()
+
+file = open("64_Core_LBM_GCC_3Dmem.trace", "r")
+
+time_64_LBM_GCC = []
+maxCore_64_LBM_GCC = []
+maxMem_64_LBM_GCC = []
+gradMem_64_LBM_GCC = []
+gradCore_64_LBM_GCC = []
+count_64_LBM_GCC = 0
+
+for line in file:
+	if count_64_LBM_GCC == 0:
+		count_64_LBM_GCC += 1
+		continue
+	arr = [float(i) for i in line.split( )]
+	maxCore_64_LBM_GCC.append(max(arr[0:64]))
+	maxMem_64_LBM_GCC.append(max(arr[64:]))
+	gradMem_64_LBM_GCC.append(max(arr[64:80])-min(arr[64:80]))
+	gradCore_64_LBM_GCC.append(max(arr[0:64])-min(arr[0:64]))
+	time_64_LBM_GCC.append(count_64_LBM_GCC)
+	count_64_LBM_GCC += 1
+
+file.close()
+
+directory = ["4_Core","16_Core","32_Core","64_Core"]
 subdir = ["GCC_LBM","LBM_GCC"]
 
 for i in directory:
@@ -408,6 +454,90 @@ plt.title('Temperature Gradient vs Time')
 plt.savefig('32_Core/LBM_GCC/Max_Core_Temperature_Gradient/32_Core_Grad_LBM_GCC_3Dmem.png')
 plt.close()
 
+plt.plot(time_64_GCC_LBM,maxMem_64_GCC_LBM)
+plt.ylabel('Max Mem Temperature (in C)')
+plt.xlabel('Time (in ms)')
+plt.grid()
+plt.title('Max Mem Temperature vs Time')
+plt.savefig('64_Core/GCC_LBM/Max_Mem_Temperature/64_Core_Mem_GCC_LBM_3Dmem.png')
+plt.close()
+
+plt.plot(time_64_LBM_GCC,maxMem_64_LBM_GCC)
+plt.ylabel('Max Mem Temperature (in C)')
+plt.xlabel('Time (in ms)')
+plt.grid()
+plt.title('Max Mem Temperature vs Time')
+plt.savefig('64_Core/LBM_GCC/Max_Mem_Temperature/64_Core_Mem_LBM_GCC_3Dmem.png')
+plt.close()
+
+plt.plot(time_64_GCC_LBM,maxCore_64_GCC_LBM)
+plt.ylabel('Max Core Temperature (in C)')
+plt.xlabel('Time (in ms)')
+plt.grid()
+plt.title('Max Core Temperature vs Time')
+plt.savefig('64_Core/GCC_LBM/Max_Core_Temperature/64_Core_Core_GCC_LBM_3Dmem.png')
+plt.close()
+
+plt.plot(time_64_LBM_GCC,maxCore_64_LBM_GCC)
+plt.ylabel('Max Core Temperature (in C)')
+plt.xlabel('Time (in ms)')
+plt.grid()
+plt.title('Max Core Temperature vs Time')
+plt.savefig('64_Core/LBM_GCC/Max_Core_Temperature/64_Core_Core_LBM_GCC_3Dmem.png')
+plt.close()
+
+plt.plot(time_64_GCC_LBM,maxMem_64_GCC_LBM,label = "Max Mem Temp")
+plt.plot(time_64_GCC_LBM,maxCore_64_GCC_LBM,label = "Max Core Temp")
+plt.ylabel('Max Core-Mem Temperature (in C)')
+plt.xlabel('Time (in ms)')
+plt.title('Max Core-Mem Temperature vs Time')
+plt.grid()
+plt.legend()
+plt.savefig('64_Core/GCC_LBM/Max_Mem_Core_Temperature/64_Core_Mem_Core_GCC_LBM_3Dmem.png')
+plt.close()
+
+plt.plot(time_64_LBM_GCC,maxMem_64_LBM_GCC,label = "Max Mem Temp")
+plt.plot(time_64_LBM_GCC,maxCore_64_LBM_GCC,label = "Max Core Temp")
+plt.ylabel('Max Core-Mem Temperature (in C)')
+plt.xlabel('Time (in ms)')
+plt.title('Max Core-Mem Temperature vs Time')
+plt.grid()
+plt.legend()
+plt.savefig('64_Core/LBM_GCC/Max_Mem_Core_Temperature/64_Core_Mem_Core_LBM_GCC_3Dmem.png')
+plt.close()
+
+plt.plot(time_64_GCC_LBM,gradMem_64_GCC_LBM)
+plt.ylabel('Temperature Gradient (in C)')
+plt.xlabel('Time (in ms)')
+plt.grid()
+plt.title('Temperature Gradient vs Time')
+plt.savefig('64_Core/GCC_LBM/Max_Mem_Temperature_Gradient/64_Core_Mem_Grad_GCC_LBM_3Dmem.png')
+plt.close()
+
+plt.plot(time_64_LBM_GCC,gradMem_64_LBM_GCC)
+plt.ylabel('Temperature Gradient (in C)')
+plt.xlabel('Time (in ms)')
+plt.grid()
+plt.title('Temperature Gradient vs Time')
+plt.savefig('64_Core/LBM_GCC/Max_Mem_Temperature_Gradient/64_Core_Mem_Grad_LBM_GCC_3Dmem.png')
+plt.close()
+
+plt.plot(time_64_GCC_LBM,gradCore_64_GCC_LBM)
+plt.ylabel('Temperature Gradient (in C)')
+plt.xlabel('Time (in ms)')
+plt.grid()
+plt.title('Temperature Gradient vs Time')
+plt.savefig('64_Core/GCC_LBM/Max_Core_Temperature_Gradient/64_Core_Grad_GCC_LBM_3Dmem.png')
+plt.close()
+
+plt.plot(time_64_LBM_GCC,gradCore_64_LBM_GCC)
+plt.ylabel('Temperature Gradient (in C)')
+plt.xlabel('Time (in ms)')
+plt.grid()
+plt.title('Temperature Gradient vs Time')
+plt.savefig('64_Core/LBM_GCC/Max_Core_Temperature_Gradient/64_Core_Grad_LBM_GCC_3Dmem.png')
+plt.close()
+
 plt.plot(time_4_GCC_LBM,maxMem_4_GCC_LBM,label = "GCC_LBM")
 plt.plot(time_4_LBM_GCC,maxMem_4_LBM_GCC,label = "LBM_GCC")
 plt.ylabel('Max Mem Temperature (in C)')
@@ -438,6 +568,16 @@ plt.legend()
 plt.savefig('32_Core/Combined/Max_Mem_Temperature/32_Core_Mem_3Dmem.png')
 plt.close()
 
+plt.plot(time_64_GCC_LBM,maxMem_64_GCC_LBM,label = "GCC_LBM")
+plt.plot(time_64_LBM_GCC,maxMem_64_LBM_GCC,label = "LBM_GCC")
+plt.ylabel('Max Mem Temperature (in C)')
+plt.xlabel('Time (in ms)')
+plt.title('Max Mem Temperature vs Time')
+plt.grid()
+plt.legend()
+plt.savefig('64_Core/Combined/Max_Mem_Temperature/64_Core_Mem_3Dmem.png')
+plt.close()
+
 plt.plot(time_4_GCC_LBM,maxCore_4_GCC_LBM,label = "GCC_LBM")
 plt.plot(time_4_LBM_GCC,maxCore_4_LBM_GCC,label = "LBM_GCC")
 plt.ylabel('Max Core Temperature (in C)')
@@ -466,4 +606,14 @@ plt.grid()
 plt.legend()
 plt.title('Max Core Temperature vs Time')
 plt.savefig('32_Core/Combined/Max_Core_Temperature/32_Core_Core_3Dmem.png')
+plt.close()
+
+plt.plot(time_64_GCC_LBM,maxCore_64_GCC_LBM,label = "GCC_LBM")
+plt.plot(time_64_LBM_GCC,maxCore_64_LBM_GCC,label = "LBM_GCC")
+plt.ylabel('Max Core Temperature (in C)')
+plt.xlabel('Time (in ms)')
+plt.grid()
+plt.legend()
+plt.title('Max Core Temperature vs Time')
+plt.savefig('64_Core/Combined/Max_Core_Temperature/64_Core_Core_3Dmem.png')
 plt.close()
