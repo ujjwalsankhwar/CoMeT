@@ -70,7 +70,30 @@ for line in file:
 
 file.close()
 
-directory = ["4_Core","16_Core","32_Core"]
+file = open("64_Core_LBM_2.5D.trace", "r")
+
+time_64 = []
+maxCore_64 = []
+maxMem_64 = []
+gradMem_64 = []
+gradCore_64 = []
+count_64 = 0
+
+for line in file:
+	if count_64 == 0:
+		count_64 += 1
+		continue
+	arr = [float(i) for i in line.split( )]
+	maxCore_64.append(max(arr[0:64]))
+	maxMem_64.append(max(arr[64:]))
+	gradMem_64.append(max(arr[64:80])-min(arr[64:80]))
+	gradCore_64.append(max(arr[0:64])-min(arr[0:64]))
+	time_64.append(count_64)
+	count_64 += 1
+
+file.close()
+
+directory = ["4_Core","16_Core","32_Core","64_Core"]
 
 for i in directory:
 	os.makedirs(i, exist_ok=True)
@@ -162,9 +185,36 @@ plt.legend()
 plt.savefig('32_Core/Max_Mem_Core_Temperature/32_Core_Mem_Core_LBM_2.5D.png')
 plt.close()
 
+plt.plot(time_64,maxMem_64)
+plt.ylabel('Max Mem Temperature (in C)')
+plt.xlabel('Time (in ms)')
+plt.grid()
+plt.title('Max Mem Temperature vs Time')
+plt.savefig('64_Core/Max_Mem_Temperature/64_Core_Mem_LBM_2.5D.png')
+plt.close()
+
+plt.plot(time_64,maxCore_64)
+plt.ylabel('Max Core Temperature (in C)')
+plt.xlabel('Time (in ms)')
+plt.grid()
+plt.title('Max Core Temperature vs Time')
+plt.savefig('64_Core/Max_Core_Temperature/64_Core_Core_LBM_2.5D.png')
+plt.close()
+
+plt.plot(time_64,maxMem_64,label = "Max Mem Temp")
+plt.plot(time_64,maxCore_64,label = "Max Core Temp")
+plt.ylabel('Max Core-Mem Temperature (in C)')
+plt.xlabel('Time (in ms)')
+plt.title('Max Core-Mem Temperature vs Time')
+plt.grid()
+plt.legend()
+plt.savefig('64_Core/Max_Mem_Core_Temperature/64_Core_Mem_Core_LBM_2.5D.png')
+plt.close()
+
 plt.plot(time_4,maxMem_4,label = "4_Core")
 plt.plot(time_16,maxMem_16,label = "16_Core")
 plt.plot(time_32,maxMem_32,label = "32_Core")
+plt.plot(time_64,maxMem_64,label = "64_Core")
 plt.ylabel('Max Mem Temperature (in C)')
 plt.xlabel('Time (in ms)')
 plt.title('Max Mem Temperature vs Time')
@@ -176,6 +226,7 @@ plt.close()
 plt.plot(time_4,maxCore_4,label = "4_Core")
 plt.plot(time_16,maxCore_16,label = "16_Core")
 plt.plot(time_32,maxCore_32,label = "32_Core")
+plt.plot(time_64,maxCore_64,label = "64_Core")
 plt.ylabel('Max Core Temperature (in C)')
 plt.xlabel('Time (in ms)')
 plt.title('Max Core Temperature vs Time')
@@ -208,6 +259,14 @@ plt.title('Temperature Gradient vs Time')
 plt.savefig('32_Core/Max_Mem_Temperature_Gradient/32_Core_Mem_Grad_LBM_2.5D.png')
 plt.close()
 
+plt.plot(time_64,gradMem_64)
+plt.ylabel('Temperature Gradient (in C)')
+plt.xlabel('Time (in ms)')
+plt.grid()
+plt.title('Temperature Gradient vs Time')
+plt.savefig('64_Core/Max_Mem_Temperature_Gradient/64_Core_Mem_Grad_LBM_2.5D.png')
+plt.close()
+
 plt.plot(time_4,gradCore_4)
 plt.ylabel('Temperature Gradient (in C)')
 plt.xlabel('Time (in ms)')
@@ -230,4 +289,12 @@ plt.xlabel('Time (in ms)')
 plt.grid()
 plt.title('Temperature Gradient vs Time')
 plt.savefig('32_Core/Max_Core_Temperature_Gradient/32_Core_Grad_LBM_2.5D.png')
+plt.close()
+
+plt.plot(time_64,gradCore_64)
+plt.ylabel('Temperature Gradient (in C)')
+plt.xlabel('Time (in ms)')
+plt.grid()
+plt.title('Temperature Gradient vs Time')
+plt.savefig('64_Core/Max_Core_Temperature_Gradient/64_Core_Grad_LBM_2.5D.png')
 plt.close()
