@@ -449,6 +449,106 @@ class CoreAndMemoryControllerLayer(ThermalLayer):
         return self.thickness
 
 
+
+
+
+
+
+
+
+class CoreAndMemoryLayer(ThermalLayer):
+    """ layer in 2.5D containing cores and memory banks """
+    def __init__(self, cores, core_width, core_height, banks, bank_width, bank_height, thickness, core_mem_distance, nb_offset_core, nb_offset_mem, name, subcore_template):
+        super().__init__(name=name)
+        cores_width = cores[0] * core_width
+        cores_height = cores[1] * core_width
+        mem_width = banks[0] * bank_width
+        mem_height = banks[1] * bank_height
+        cores_offset = (
+            Length(0),  # x
+            Length(0) if cores_height > mem_height else 0.5 * (mem_height - cores_height)  # y
+        )
+        mem_offset = (
+            cores_width + core_mem_distance,  # x
+            Length(0) if mem_height > cores_height else 0.5 * (cores_height - mem_height)  # y
+        )
+        self.cores = CoreLayer(cores, core_width, core_height, thickness, name=None, nb_offset=nb_offset_core, pos_offset=cores_offset, subcomponent_template=subcore_template)
+        self.memory = MemoryLayer(banks, bank_width, bank_height, thickness, name=None, nb_offset=nb_offset_mem, pos_offset=mem_offset)
+        self.core_mem_distance = core_mem_distance
+        self.thickness = thickness
+
+    @property
+    def total_width(self):
+        return self.cores.total_width + self.core_mem_distance + self.memory.total_width
+
+    @property
+    def total_height(self):
+        return max(self.cores.total_height, self.memory.total_height)
+
+    def write_floorplan(self, directory):
+        with open(self._get_floorplan_filename(directory), 'w') as f:
+            f.write('# Line Format: <unit-name>\\t<width>\\t<height>\\t<left-x>\\t<bottom-y>\\t[<specific-heat-capacity>\\t<thermal-resistivity>]\n')
+            f.write(self.cores.create_floorplan_elements())
+            f.write(self.memory.create_floorplan_elements())
+            if self.cores.total_height >= self.memory.total_height:
+                # add air blocks below and above memory
+                h = 0.5 * (self.cores.total_height - self.memory.total_height)
+                f.write('{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.6f}\t{}\t{}\n'.format(
+                    'X1',
+                    self.memory.total_width.meters, h.meters,
+                    (self.cores.total_width + self.core_mem_distance).meters, 0,
+                    AIR_SPECIFIC_HEAT_CAPACITY, AIR_THERMAL_RESISTIVITY))
+                f.write('{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.6f}\t{}\t{}\n'.format(
+                    'X2',
+                    self.memory.total_width.meters, h.meters,
+                    (self.cores.total_width + self.core_mem_distance).meters, (self.cores.total_height - h).meters,
+                    AIR_SPECIFIC_HEAT_CAPACITY, AIR_THERMAL_RESISTIVITY))
+                # add air block between cores and memory
+                f.write('{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.6f}\t{}\t{}\n'.format(
+                    'X3',
+                    self.core_mem_distance.meters, self.cores.total_height.meters,
+                    self.cores.total_width.meters, 0,
+                    AIR_SPECIFIC_HEAT_CAPACITY, AIR_THERMAL_RESISTIVITY))
+            else:
+                # add air blocks below and above cores
+                h = 0.5 * (self.memory.total_height - self.cores.total_height)
+                f.write('{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.6f}\t{}\t{}\n'.format(
+                    'X1',
+                    self.cores.total_width.meters, h.meters,
+                    0, 0,
+                    AIR_SPECIFIC_HEAT_CAPACITY, AIR_THERMAL_RESISTIVITY))
+                f.write('{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.6f}\t{}\t{}\n'.format(
+                    'X2',
+                    self.cores.total_width.meters, h.meters,
+                    0, (self.memory.total_height - h).meters,
+                    AIR_SPECIFIC_HEAT_CAPACITY, AIR_THERMAL_RESISTIVITY))
+                # add air block between cores and memory
+                f.write('{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.6f}\t{}\t{}\n'.format(
+                    'X3',
+                    self.core_mem_distance.meters, self.memory.total_height.meters,
+                    self.cores.total_width.meters, 0,
+                    AIR_SPECIFIC_HEAT_CAPACITY, AIR_THERMAL_RESISTIVITY))
+
+    def _has_power_consumption(self):
+        return True
+
+    def _specific_heat_capacity(self):
+        return SILICON_SPECIFIC_HEAT_CAPACITY
+
+    def _thermal_resistivity(self):
+        return SILICON_THERMAL_RESISTIVITY
+
+    def _thickness(self):
+        return self.thickness
+
+
+
+
+
+
+
+
+
 class PadWithAirLayer(ThermalLayer):
     """ wrap a layer with air to match the given dimension """
     def __init__(self, total_width, total_height, content, force=None):
@@ -663,8 +763,8 @@ def main():
         if len(args.banks) != 3:
             parser.error('banks must be 3D in 2.5D mode. Example: --banks 4x4x2')
 
-        if args.cores[2] != 1:
-            parser.error(f'2.5D currently only supports 1 core layer (requested {args.cores[2]})')
+        # if args.cores[2] != 1:
+        #     parser.error(f'2.5D currently only supports 1 core layer (requested {args.cores[2]})')
 
         if args.core_thickness != args.bank_thickness:
             parser.error(f'core and bank thickness must be the same in 2.5D (requested {args.core_thickness} and {args.bank_thickness})')
@@ -693,7 +793,21 @@ def main():
             cores_width + args.core_mem_distance,  # x
             Length(0) if mem_height > cores_height else 0.5 * (cores_height - mem_height)  # y
         )
-        for i in range(args.banks[2]):
+
+
+        for i in range(min(args.cores[2]-1,args.banks[2])):
+            stack.add_layer(tim)
+            cores
+            stack.add_layer(CoreAndMemoryLayer(
+                cores_2d, args.corex, args.corey,
+                banks_2d, args.bankx, args.banky, args.core_thickness,
+                args.core_mem_distance,
+                (i+1)*cores_per_layer, i*banks_per_layer,
+                name=f'core_and_mem_bank_{i+1}',
+                subcore_template=args.subcore_template))
+
+
+        for i in range(min(args.cores[2]-1,args.banks[2]),args.banks[2]):
             stack.add_layer(tim)
             mem_banks = MemoryLayer(banks_2d, args.bankx, args.banky, args.bank_thickness, name=f'mem_bank_{i+1}', pos_offset=mem_offset, nb_offset=i*banks_per_layer)
             stack.add_layer(PadWithAirLayer(total_width, total_height, mem_banks, force={'left': True, 'top': True, 'bottom': True}))
