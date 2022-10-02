@@ -630,13 +630,54 @@ for (i = 0; i < length_v; ++i)
       /* permute the power numbers according to the floorplan order	*/
       if (model->type == BLOCK_MODEL)
         for(i=0; i < n; i++)
-          power[get_blk_index(flp, names[i])] = vals[i];
+        	power[get_blk_index(flp, names[i])] = vals[i];
       else
         for(i=0, base=0, count=0; i < model->grid->n_layers; i++) {
             if(model->grid->layers[i].has_power) {
+            	idx = 0;
                 for(j=0; j < model->grid->layers[i].flp->n_units; j++) {
-                    idx = get_blk_index(model->grid->layers[i].flp, names[count+j]);
-                    power[base+idx] = vals[count+j];
+                    if (i==5){
+                      if (j<=3){
+                         power[base+idx] = vals[count+j];
+                      }
+                      else{
+                         power[base+idx] = vals[count+12+j];
+                      }
+                      idx ++;
+                    }
+                    else if (i==7){
+                      if (j<=3){
+                         power[base+idx] = vals[4+j];
+                      }
+                      else{
+                         power[base+idx] = vals[count+8+j];
+                      }
+                      idx ++;
+                    }
+                    else if (i == 9){
+                      if (j <= 3){
+                        power[base+idx] = vals[8+j];
+                      }
+                      else{
+                        power[base+idx]= vals[count+4+j];
+                      }
+                      idx ++;
+                    }
+                    else if (i == 11){
+                      if (j <= 3){
+                        power[base+idx] = vals[12+j];
+                      }
+                      else{
+                        power[base+idx] = vals[count+j];
+                      }
+                      idx ++;
+                    }
+                    else{
+                      idx = get_blk_index(model->grid->layers[i].flp, names[count+j]);
+                      power[base+idx] = vals[count+j];
+                    }
+                    
+                    
                 }
                 count += model->grid->layers[i].flp->n_units;
             }	
@@ -665,13 +706,52 @@ for (i = 0; i < length_v; ++i)
           /* permute back to the trace file order	*/
           if (model->type == BLOCK_MODEL)
             for(i=0; i < n; i++)
-              vals[i] = temp[get_blk_index(flp, names[i])];
+            	vals[i] = temp[get_blk_index(flp, names[i])];
           else
             for(i=0, base=0, count=0; i < model->grid->n_layers; i++) {
                 if(model->grid->layers[i].has_power) {
+                	idx = 0;
                     for(j=0; j < model->grid->layers[i].flp->n_units; j++) {
-                        idx = get_blk_index(model->grid->layers[i].flp, names[count+j]);
-                        vals[count+j] = temp[base+idx];
+                    	if (i==5){
+                    		if (j <= 3){
+                    			vals[j] = temp[base+idx];
+                    		}
+                    		else{
+                    			vals[count+12+j] = temp[base+idx];
+                    		}
+                    		idx ++;
+                    	}
+                    	else if (i == 7){
+                    		if (j <= 3){
+                    			vals[4+j] = temp[base+idx];
+                    		}
+                    		else{
+                    			vals[count+8+j] = temp[base+idx];
+                    		}
+                    		idx ++;
+                    	}
+                      else if (i == 9){
+                        if (j <= 3){
+                          vals[8+j] = temp[base+idx];
+                        }
+                        else{
+                          vals[count+4+j] = temp[base+idx];
+                        }
+                        idx ++;
+                      }
+                      else if (i == 11){
+                        if (j <= 3){
+                          vals[12+j] = temp[base+idx];
+                        }
+                        else{
+                          vals[count+j] = temp[base+idx];
+                        }
+                        idx ++;
+                      }
+                    	else{
+                    		idx = get_blk_index(model->grid->layers[i].flp, names[count+j]);
+                        	vals[count+j] = temp[base+idx];
+                    	}
                     }
                     count += model->grid->layers[i].flp->n_units;	
                 }	
