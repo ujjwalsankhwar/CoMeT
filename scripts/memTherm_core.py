@@ -226,10 +226,11 @@ def gen_ptrace_header():
     ptrace_header = ''
     if type_of_stack=="2.5D":
         # ptrace_header=ptrace_header + "I0" + "\t" 
-        for x in range(0,cores_in_x):
-            for y in range(0,cores_in_y):
-                ptrace_header=ptrace_header + "C_" + str(x*cores_in_y + y) + "\t" 
-                #ptrace_header=ptrace_header + "C" + str(x) + "_" + str(y) + "\t" 
+        for x in range(0,cores_in_z):
+            for y in range(0,cores_in_x):
+                for z in range(0,cores_in_y):
+                    ptrace_header=ptrace_header + "C_" + str(z*cores_in_x*cores_in_y + x*cores_in_y + y) + "\t" 
+                    #ptrace_header=ptrace_header + "C" + str(x) + "_" + str(y) + "\t" 
     
     if type_of_stack== "3Dmem" or type_of_stack== "2.5D":
         for x in range(0,logic_cores_in_x):
