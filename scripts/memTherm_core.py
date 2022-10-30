@@ -224,15 +224,15 @@ def gen_ptrace_header():
     # For 3D: core is at the top, whereas for 3Dmem, 2.5D config. the 3Dmem is at the bottom.
     # Creating Header
     ptrace_header = ''
-    if type_of_stack=="2.5D":
+    if type_of_stack=="2.5D" or type_of_stack=="2.5D+":
         # ptrace_header=ptrace_header + "I0" + "\t" 
-        for x in range(0,cores_in_z):
-            for y in range(0,cores_in_x):
-                for z in range(0,cores_in_y):
+        for z in range(0,cores_in_z):
+            for x in range(0,cores_in_x):
+                for y in range(0,cores_in_y):
                     ptrace_header=ptrace_header + "C_" + str(z*cores_in_x*cores_in_y + x*cores_in_y + y) + "\t" 
                     #ptrace_header=ptrace_header + "C" + str(x) + "_" + str(y) + "\t" 
     
-    if type_of_stack== "3Dmem" or type_of_stack== "2.5D":
+    if type_of_stack== "3Dmem" or type_of_stack== "2.5D" or type_of_stack=="2.5D+":
         for x in range(0,logic_cores_in_x):
             for y in range(0,logic_cores_in_y):
                 ptrace_header=ptrace_header + "LC_" + str(x*logic_cores_in_y + y) + "\t" 
@@ -241,6 +241,10 @@ def gen_ptrace_header():
     if type_of_stack=="2.5D":
         for x in range(1,4):
             ptrace_header=ptrace_header + "X" + str(x) + "\t" 
+
+    if type_of_stack=="2.5D+":
+        for x in range(1,9):
+            ptrace_header=ptrace_header + "X" + str(x) + "\t"
                 
     for z in range(0,banks_in_z):
         for x in range(0,banks_in_x):
@@ -253,6 +257,9 @@ def gen_ptrace_header():
         if type_of_stack=="2.5D":
             for x in range(1,4):
                 ptrace_header=ptrace_header + "X" + str(x) + "\t" 
+        if type_of_stack=="2.5D+":
+            for x in range(1,9):
+                ptrace_header=ptrace_header + "X" + str(x) + "\t"
     
     if type_of_stack=="3D":
         for z in range(0,cores_in_z):
@@ -477,12 +484,12 @@ class memTherm:
       bank_power_trace[bank] = round(bank_power_trace[bank], 3)
     logic_power_trace = ''
     #create logic_core power array. applicable only for 3Dmem and 2.5D memory
-    if (type_of_stack=="2.5D" or type_of_stack=="3Dmem"):
+    if (type_of_stack=="2.5D" or type_of_stack=="3Dmem" or type_of_stack=="2.5D+"):
         logic_power_trace = [logic_core_power for number in xrange(NUM_LC)]
     power_trace = ''
     # convert power trace into a concatenated string for formated output
     #for 2.5D, read the core power from the core power trace file and include in the total power trace
-    if (type_of_stack == "2.5D"):
+    if (type_of_stack == "2.5D" or type_of_stack == "2.5D+"):
         with open(c_power_trace_file, 'r') as power_file:
             power_file.readline()  # ignore first line that contains the header
             c_power_data=power_file.readline()  # ignore first line that contains the header
@@ -495,6 +502,9 @@ class memTherm:
     if (type_of_stack == "2.5D"):
         for x in range(1,4):
             power_trace = power_trace + str(0.00) + '\t'
+    if type_of_stack=="2.5D+":
+        for x in range(1,9):
+            power_trace = power_trace + str(0.00) + '\t'
      #add bank power into the main power trace
     for bank in range(len(bank_power_trace)):
             #add 0 power for X1, X2, X3 for 2.5D
@@ -503,11 +513,17 @@ class memTherm:
             power_trace = power_trace + str(0.00) + '\t'
             power_trace = power_trace + str(0.00) + '\t'
             #power_trace = power_trace + str(0.00) + '\t'
+        if (type_of_stack == "2.5D+" and bank%(banks_in_x*banks_in_y)==0 and bank>0):
+            for x in range(1,9):
+                power_trace = power_trace + str(0.00) + '\t'
         #add bank power trace for all type of memories
         power_trace = power_trace + str(bank_power_trace[bank]) + '\t'
     #add 0 power for X1, X2, X3 for 2.5D at last
     if (type_of_stack == "2.5D"):
         for x in range(1,4):
+            power_trace = power_trace + str(0.00) + '\t'
+    if (type_of_stack == "2.5D+"):
+        for x in range(1,9):
             power_trace = power_trace + str(0.00) + '\t'
     c_power_data = ""
       #read core power and add to main power trace at last for 3D
@@ -627,6 +643,23 @@ class memTherm:
         mem_data_split = []
         for layer in range(banks_in_z):
             start_index = layer*(banks_per_layer+3)         # +4 corresponds to X1,X2,X3
+            mem_data_split.extend(mem_portion[start_index:start_index+banks_per_layer])
+        mem_data = "\t".join(mem_data_split)
+    elif (type_of_stack == "2.5D+"):
+        with open(inst_trace_file, 'r') as data_file:
+            if (skip_header):
+                data_file.readline()  # ignore first line that contains the header
+            data=data_file.readline()  # ignore first line that contains the header
+            data=data.rstrip()  
+        data_file.close()
+        data_split = data.split("\t")
+        core_data_split = data_split[:NUM_CORES]        #extract core temperatures from the line (first few entries)
+        core_data = "\t".join(core_data_split)
+        mem_portion = data_split[NUM_CORES+NUM_LC+8 : ] # skip the first few entries corresponding to cores, LC, and X1, X2, X3
+        banks_per_layer = banks_in_x*banks_in_y
+        mem_data_split = []
+        for layer in range(banks_in_z):
+            start_index = layer*(banks_per_layer+8)         # +4 corresponds to X1,X2,X3
             mem_data_split.extend(mem_portion[start_index:start_index+banks_per_layer])
         mem_data = "\t".join(mem_data_split)
 
