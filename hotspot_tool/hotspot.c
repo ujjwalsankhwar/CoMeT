@@ -31,36 +31,36 @@
  * chooses the grid model. 
  */
 
-/* Guidelines for choosing the block or the grid model	*/
+/* Guidelines for choosing the block or the grid model  */
 
 /**************************************************************************/
 /* HotSpot contains two methods for solving temperatures:                 */
-/* 	1) Block Model -- the same as HotSpot 2.0	              						  */
-/*	2) Grid Model -- the die is divided into regular grid cells       	  */
+/*  1) Block Model -- the same as HotSpot 2.0                             */
+/*  2) Grid Model -- the die is divided into regular grid cells           */
 /**************************************************************************/
-/* How the grid model works: 											                        */
-/* 	The grid model first reads in floorplan and maps block-based power	  */
+/* How the grid model works:                                              */
+/*  The grid model first reads in floorplan and maps block-based power    */
 /* to each grid cell, then solves the temperatures for all the grid cells,*/
 /* finally, converts the resulting grid temperatures back to block-based  */
-/* temperatures.                            														  */
+/* temperatures.                                                          */
 /**************************************************************************/
-/* The grid model is useful when 				                    						  */
-/* 	1) More detailed temperature distribution inside a functional unit    */
-/*     is desired.														                            */
+/* The grid model is useful when                                          */
+/*  1) More detailed temperature distribution inside a functional unit    */
+/*     is desired.                                                        */
 /*  2) Too many functional units are included in the floorplan, resulting */
-/*		 in extremely long computation time if using the Block Model        */
-/*	3) If temperature information is desired for many tiny units,		      */ 
-/* 		 such as individual register file entry.						                */
+/*     in extremely long computation time if using the Block Model        */
+/*  3) If temperature information is desired for many tiny units,         */ 
+/*     such as individual register file entry.                            */
 /**************************************************************************/
-/*	Comparisons between Grid Model and Block Model:						            */
-/*		In general, the grid model is more accurate, because it can deal    */
-/*	with various floorplans and it provides temperature gradient across	  */
-/*	each functional unit. The block model models essentially the center	  */
-/*	temperature of each functional unit. But the block model is typically */
-/*	faster because there are less nodes to solve.						              */
-/*		Therefore, unless it is the case where the grid model is 		        */
-/*	definitely	needed, we suggest using the block model for computation  */
-/*  efficiency.															                              */
+/*  Comparisons between Grid Model and Block Model:                       */
+/*    In general, the grid model is more accurate, because it can deal    */
+/*  with various floorplans and it provides temperature gradient across   */
+/*  each functional unit. The block model models essentially the center   */
+/*  temperature of each functional unit. But the block model is typically */
+/*  faster because there are less nodes to solve.                         */
+/*    Therefore, unless it is the case where the grid model is            */
+/*  definitely  needed, we suggest using the block model for computation  */
+/*  efficiency.                                                           */
 /**************************************************************************/
 
 void usage(int argc, char **argv)
@@ -129,7 +129,7 @@ void global_config_from_strs(global_config_t *config, str_pair *table, int size)
       strcpy(config->dump_config, NULLFILE);
   }
   if ((idx = get_str_index(table, size, "detailed_3D")) >= 0) {
-      if(sscanf(table[idx].value, "%s", config->detailed_3D) != 1)	
+      if(sscanf(table[idx].value, "%s", config->detailed_3D) != 1)  
         fatal("invalid format for configuration  parameter lc\n");
   } else {
       strcpy(config->detailed_3D, "off");
@@ -149,6 +149,7 @@ void global_config_from_strs(global_config_t *config, str_pair *table, int size)
   if ((idx = get_str_index(table, size, "v")) >= 0) {
       printf("idx = %u\n", idx);
       printf("table[idx].value = %s\n", table[idx].value);
+      printf("lol = %s\n", volt_vector);
       if(sscanf(table[idx].value, "%s", volt_vector) != 1)
         fatal("invalid format for volt_vector\n");
    } else {
@@ -203,9 +204,9 @@ int read_names(FILE *fp, char **names)
   char line[LINE_SIZE], temp[LINE_SIZE], *src;
   int i;
 
-  /* skip empty lines	*/
+  /* skip empty lines */
   do {
-      /* read the entire line	*/
+      /* read the entire line */
       fgets(line, LINE_SIZE, fp);
       if (feof(fp))
         fatal("not enough names in trace file\n");
@@ -213,11 +214,11 @@ int read_names(FILE *fp, char **names)
       src = strtok(temp, " \r\t\n");
   } while (!src);
 
-  /* new line not read yet	*/	
+  /* new line not read yet  */  
   if(line[strlen(line)-1] != '\n')
     fatal("line too long\n");
 
-  /* chop the names from the line read	*/
+  /* chop the names from the line read  */
   for(i=0,src=line; *src && i < MAX_UNITS; i++) {
       if(!sscanf(src, "%s", names[i]))
         fatal("invalid format of names\n");
@@ -231,15 +232,15 @@ int read_names(FILE *fp, char **names)
   return i;
 }
 
-/* read a single line of power trace numbers	*/
+/* read a single line of power trace numbers  */
 int read_vals(FILE *fp, double *vals)
 {
   char line[LINE_SIZE], temp[LINE_SIZE], *src;
   int i;
 
-  /* skip empty lines	*/
+  /* skip empty lines */
   do {
-      /* read the entire line	*/
+      /* read the entire line */
       fgets(line, LINE_SIZE, fp);
       if (feof(fp))
         return 0;
@@ -247,11 +248,11 @@ int read_vals(FILE *fp, double *vals)
       src = strtok(temp, " \r\t\n");
   } while (!src);
 
-  /* new line not read yet	*/	
+  /* new line not read yet  */  
   if(line[strlen(line)-1] != '\n')
     fatal("line too long\n");
 
-  /* chop the power values from the line read	*/
+  /* chop the power values from the line read */
   for(i=0,src=line; *src && i < MAX_UNITS; i++) {
       if(!sscanf(src, "%s", temp) || !sscanf(src, "%lf", &vals[i]))
         fatal("invalid format of values\n");
@@ -265,7 +266,7 @@ int read_vals(FILE *fp, double *vals)
   return i;
 }
 
-/* read a single line of bank mode floats, needed for the low power mode.	*/
+/* read a single line of bank mode floats, needed for the low power mode. */
 int read_bank_modes(FILE *fp, float bank_modes[])
 {
   /*
@@ -279,9 +280,9 @@ int read_bank_modes(FILE *fp, float bank_modes[])
   char temp_status[10];
   
 
-  /* skip empty lines	*/
+  /* skip empty lines */
   do {
-      /* read the entire line	*/
+      /* read the entire line */
       fgets(line, LINE_SIZE, fp);
       if (feof(fp))
         return 0;
@@ -291,13 +292,13 @@ int read_bank_modes(FILE *fp, float bank_modes[])
   
   fgets(line, LINE_SIZE, fp);
 
-  /* new line not read yet	*/	
+  /* new line not read yet  */  
   if(line[strlen(line)-1] != '\n')
   {
     fatal("line too long\n");
   }
 
-  /* chop the bank power mode values from the line read	*/
+  /* chop the bank power mode values from the line read */
   int banks_counted = 0;
   int j = 0;
   src = line;
@@ -317,7 +318,7 @@ int read_bank_modes(FILE *fp, float bank_modes[])
   return banks_counted;
 }
 
-/* write a single line of functional unit names	*/
+/* write a single line of functional unit names */
 void write_names(FILE *fp, char **names, int size)
 {
   int i;
@@ -326,7 +327,7 @@ void write_names(FILE *fp, char **names, int size)
   fprintf(fp, "%s\n", names[i]);
 }
 
-/* write a single line of temperature trace(in degree C)	*/
+/* write a single line of temperature trace(in degree C)  */
 void write_vals(FILE *fp, double *vals, int size)
 {
   int i;
@@ -379,21 +380,21 @@ int main(int argc, char **argv)
   float bank_modes[MAX_UNITS]; // Keep track of the bank modes for use in low power mode.
   int banks_nr = 0;
 
-  /* trace file pointers	*/
+  /* trace file pointers  */
   FILE *pin, *tout, *bmin = NULL; // bmin points to the bank mode input file.
-  /* floorplan	*/
+  /* floorplan  */
   flp_t *flp;
-  /* hotspot temperature model	*/
+  /* hotspot temperature model  */
   RC_model_t *model;
-  /* instantaneous temperature and power values	*/
+  /* instantaneous temperature and power values */
   double *temp = NULL, *power;
   double total_power = 0.0;
 
-  /* steady state temperature and power values	*/
+  /* steady state temperature and power values  */
   double *overall_power, *steady_temp;
-  /* thermal model configuration parameters	*/
+  /* thermal model configuration parameters */
   thermal_config_t thermal_config;
-  /* global configuration parameters	*/
+  /* global configuration parameters  */
   global_config_t global_config;
   /* table to hold options and configuration */
   str_pair table[MAX_ENTRIES];
@@ -415,7 +416,7 @@ int main(int argc, char **argv)
   global_config_from_strs(&global_config, table, size);
 
   // printf("LOKESH leakage_vector: %s, length = %d",leakage_vector, strlen(leakage_vector));
-  int length_lv = strlen(leakage_vector);	
+  int length_lv = strlen(leakage_vector); 
 for (i = 0; i < (length_lv/2); ++i)
     leakage[i] = 1;
 
@@ -450,8 +451,6 @@ for (i = 0; i < length_v; ++i)
     volt[(int)i/4] = 10 * (volt_vector[i-2] - '0') + (volt_vector[i] - '0');      
 }
 
-
-
 //   printf("LOKESH leakage\n", leakage[i]);
 
 // for (i = 0; i < 16; ++i)
@@ -466,11 +465,11 @@ for (i = 0; i < length_v; ++i)
 //   printf("%d,", volt[i]);
 // }
 
-  /* no transient simulation, only steady state	*/
+  /* no transient simulation, only steady state */
   if(!strcmp(global_config.t_outfile, NULLFILE))
     do_transient = FALSE;
 
-  /* read configuration file	*/
+  /* read configuration file  */
   if (strcmp(global_config.config, NULLFILE))
     size += read_str_pairs(&table[size], MAX_ENTRIES, global_config.config);
 
@@ -489,7 +488,7 @@ for (i = 0; i < length_v; ++i)
 
   /* get defaults */
   thermal_config = default_thermal_config();
-  /* modify according to command line / config file	*/
+  /* modify according to command line / config file */
   thermal_config_add_from_strs(&thermal_config, table, size);
 
   /* if package model is used, run package model */
@@ -502,11 +501,11 @@ for (i = 0; i < length_v; ++i)
       }
   }
 
-  /* dump configuration if specified	*/
+  /* dump configuration if specified  */
   if (strcmp(global_config.dump_config, NULLFILE)) {
       size = global_config_to_strs(&global_config, table, MAX_ENTRIES);
       size += thermal_config_to_strs(&thermal_config, &table[size], MAX_ENTRIES-size);
-      /* prefix the name of the variable with a '-'	*/
+      /* prefix the name of the variable with a '-' */
       dump_str_pairs(table, size, global_config.dump_config, "-");
   }
 
@@ -521,7 +520,7 @@ for (i = 0; i < length_v; ++i)
   printf("do_detailed_3D= %d\n", do_detailed_3D);
 
   //BU_3D: added do_detailed_3D to alloc_RC_model. Detailed 3D modeling can only be used with grid-level modeling.
-  /* allocate and initialize the RC model	*/
+  /* allocate and initialize the RC model */
   model = alloc_RC_model(&thermal_config, flp, do_detailed_3D); 
 
   if (model->type == BLOCK_MODEL && do_detailed_3D) 
@@ -538,8 +537,8 @@ for (i = 0; i < length_v; ++i)
   debug_print_model(model);
 #endif
 
-  /* allocate the temp and power arrays	*/
-  /* using hotspot_vector to internally allocate any extra nodes needed	*/
+  /* allocate the temp and power arrays */
+  /* using hotspot_vector to internally allocate any extra nodes needed */
   if (do_transient)
     temp = hotspot_vector(model);
   power = hotspot_vector(model);
@@ -548,11 +547,11 @@ for (i = 0; i < length_v; ++i)
 
   /* set up initial instantaneous temperatures */
   if (do_transient && strcmp(model->config->init_file, NULLFILE)) {
-      if (!model->config->dtm_used)	/* initial T = steady T for no DTM	*/
+      if (!model->config->dtm_used) /* initial T = steady T for no DTM  */
         read_temp(model, temp, model->config->init_file, FALSE);
-      else	/* initial T = clipped steady T with DTM	*/
+      else  /* initial T = clipped steady T with DTM  */
         read_temp(model, temp, model->config->init_file, TRUE);
-  } else if (do_transient)	/* no input file - use init_temp as the common temperature	*/
+  } else if (do_transient)  /* no input file - use init_temp as the common temperature  */
     set_temp(model, temp, model->config->init_temp);
 
   /* n is the number of functional blocks in the block model
@@ -574,7 +573,7 @@ for (i = 0; i < length_v; ++i)
   if(do_transient && !(tout = fopen(global_config.t_outfile, "w")))
     fatal("unable to open temperature trace file for output\n");
 
-  /* names of functional units	*/
+  /* names of functional units  */
   names = alloc_names(MAX_UNITS, STR_SIZE);
   if(read_names(pin, names) != n)
     fatal("no. of units in floorplan and trace file differ\n");
@@ -590,7 +589,30 @@ for (i = 0; i < length_v; ++i)
   }
   model->banks_nr = banks_nr;
 
-  /* header line of temperature trace	*/
+
+
+
+  int cores_in_z = 0;
+  int cores_in_xy = 0;
+  int banks_in_xy = 0;
+  for (i=0;i < model->grid->n_layers; i++){
+    if(model->grid->layers[i].has_power){
+      if (strstr(model->grid->layers[i].flp->units[0].name, "C_") != NULL){
+        cores_in_z++;
+      }
+    }
+  }
+  for (i=0;i<model->grid->layers[5].flp->n_units;i++){
+    if (strstr(model->grid->layers[5].flp->units[i].name, "C_") != NULL){
+      cores_in_xy++;
+    } 
+    if (strstr(model->grid->layers[5].flp->units[i].name, "LC_") != NULL){
+      cores_in_xy--;
+      banks_in_xy++;
+    }
+  }
+
+  /* header line of temperature trace */
   if (do_transient)
     write_names(tout, names, n);
 
@@ -621,70 +643,61 @@ for (i = 0; i < length_v; ++i)
     model->bank_modes[i] = bank_modes[i];
   }
   
-  /* read the instantaneous power trace	*/
+  /* read the instantaneous power trace */
   vals = dvector(MAX_UNITS);
   while ((num=read_vals(pin, vals)) != 0) {
       if(num != n)
         fatal("invalid trace file format\n");
 
-      /* permute the power numbers according to the floorplan order	*/
+      /* permute the power numbers according to the floorplan order */
       if (model->type == BLOCK_MODEL)
         for(i=0; i < n; i++)
-        	power[get_blk_index(flp, names[i])] = vals[i];
-      else
-        for(i=0, base=0, count=0; i < model->grid->n_layers; i++) {
-            if(model->grid->layers[i].has_power) {
-            	idx = 0;
-                for(j=0; j < model->grid->layers[i].flp->n_units; j++) {
-                    if (i==5){
-                      if (j<=3){
-                         power[base+idx] = vals[count+j];
-                      }
-                      else{
-                         power[base+idx] = vals[count+12+j];
-                      }
-                      idx ++;
-                    }
-                    else if (i==7){
-                      if (j<=3){
-                         power[base+idx] = vals[4+j];
-                      }
-                      else{
-                         power[base+idx] = vals[count+8+j];
-                      }
-                      idx ++;
-                    }
-                    else if (i == 9){
-                      if (j <= 3){
-                        power[base+idx] = vals[8+j];
-                      }
-                      else{
-                        power[base+idx]= vals[count+4+j];
-                      }
-                      idx ++;
-                    }
-                    else if (i == 11){
-                      if (j <= 3){
-                        power[base+idx] = vals[12+j];
-                      }
-                      else{
-                        power[base+idx] = vals[count+j];
-                      }
-                      idx ++;
+          power[get_blk_index(flp, names[i])] = vals[i];
+      else{
+        // for(i=0, base=0, count=0; i < model->grid->n_layers; i++) {
+        //     if(model->grid->layers[i].has_power) {
+        //         for(j=0; j < model->grid->layers[i].flp->n_units; j++) {
+        //             idx = get_blk_index(model->grid->layers[i].flp, names[count+j]);
+        //             power[base+idx] = vals[count+j];
+        //         }
+        //         count += model->grid->layers[i].flp->n_units;
+        //     } 
+        //     base += model->grid->layers[i].flp->n_units;  
+        // }
+
+
+        int cores_in_z_t = cores_in_z;
+        for(i=0, base=0, count=0; i < model->grid->n_layers; i++){
+          if(model->grid->layers[i].has_power) {
+                idx = 0;
+                if (cores_in_z_t != 0){
+                  cores_in_z_t--;
+                  for(j=0; j < model->grid->layers[i].flp->n_units; j++) {
+                    if (j<cores_in_xy){
+                      power[base+idx] = vals[(cores_in_z - cores_in_z_t - 1)*cores_in_xy +j];
+                      // printf("%s\n",names[(cores_in_z - cores_in_z_t - 1)*cores_in_xy +j]);
                     }
                     else{
-                      idx = get_blk_index(model->grid->layers[i].flp, names[count+j]);
-                      power[base+idx] = vals[count+j];
+                      power[base+idx] = vals[count+j+(cores_in_xy*cores_in_z_t)];
+                      // printf("%s\n",names[count+j+(cores_in_xy*cores_in_z_t)]);
                     }
-                    
-                    
+                    idx++;
+                  }
+                }
+                else{
+                  for(j=0; j < model->grid->layers[i].flp->n_units; j++) {
+                    power[base+idx] = vals[count+j];
+                    // printf("%s\n",names[count+j]);
+                    idx++;
+                  }
                 }
                 count += model->grid->layers[i].flp->n_units;
-            }	
-            base += model->grid->layers[i].flp->n_units;	
+            } 
+            base += model->grid->layers[i].flp->n_units;
         }
+      }
 
-      /* compute temperature	*/
+      /* compute temperature  */
       if (do_transient) {
           /* if natural convection is considered, update transient convection resistance first */
           if (natural) {
@@ -703,66 +716,59 @@ for (i = 0; i < length_v; ++i)
           else
             compute_temp(model, power, NULL, model->config->sampling_intvl);
 
-          /* permute back to the trace file order	*/
+          /* permute back to the trace file order */
           if (model->type == BLOCK_MODEL)
             for(i=0; i < n; i++)
-            	vals[i] = temp[get_blk_index(flp, names[i])];
-          else
-            for(i=0, base=0, count=0; i < model->grid->n_layers; i++) {
+              vals[i] = temp[get_blk_index(flp, names[i])];
+          else{
+            // for(i=0, base=0, count=0; i < model->grid->n_layers; i++) {
+            //     if(model->grid->layers[i].has_power) {
+            //         for(j=0; j < model->grid->layers[i].flp->n_units; j++) {
+            //             idx = get_blk_index(model->grid->layers[i].flp, names[count+j]);
+            //             vals[count+j] = temp[base+idx];
+            //         }
+            //         count += model->grid->layers[i].flp->n_units; 
+            //     } 
+            //     base += model->grid->layers[i].flp->n_units;  
+            // }
+
+
+              int cores_in_z_t = cores_in_z;
+              for(i=0, base=0, count=0; i < model->grid->n_layers; i++){
                 if(model->grid->layers[i].has_power) {
-                	idx = 0;
-                    for(j=0; j < model->grid->layers[i].flp->n_units; j++) {
-                    	if (i==5){
-                    		if (j <= 3){
-                    			vals[j] = temp[base+idx];
-                    		}
-                    		else{
-                    			vals[count+12+j] = temp[base+idx];
-                    		}
-                    		idx ++;
-                    	}
-                    	else if (i == 7){
-                    		if (j <= 3){
-                    			vals[4+j] = temp[base+idx];
-                    		}
-                    		else{
-                    			vals[count+8+j] = temp[base+idx];
-                    		}
-                    		idx ++;
-                    	}
-                      else if (i == 9){
-                        if (j <= 3){
-                          vals[8+j] = temp[base+idx];
+                      idx = 0;
+                      if (cores_in_z_t != 0){
+                        cores_in_z_t--;
+                        for(j=0; j < model->grid->layers[i].flp->n_units; j++) {
+                          if (j<cores_in_xy){
+                            vals[(cores_in_z - cores_in_z_t - 1)*cores_in_xy +j] = temp[base+idx];
+                            // printf("%s\n",names[(cores_in_z - cores_in_z_t - 1)*cores_in_xy +j]);
+                          }
+                          else{
+                            vals[count+j+(cores_in_xy*cores_in_z_t)] = temp[base+idx];
+                            // printf("%s\n",names[count+j+(cores_in_xy*cores_in_z_t)]);
+                          }
+                          idx++;
                         }
-                        else{
-                          vals[count+4+j] = temp[base+idx];
-                        }
-                        idx ++;
                       }
-                      else if (i == 11){
-                        if (j <= 3){
-                          vals[12+j] = temp[base+idx];
-                        }
-                        else{
+                      else{
+                        for(j=0; j < model->grid->layers[i].flp->n_units; j++) {
                           vals[count+j] = temp[base+idx];
+                          // printf("%s\n",names[count+j]);
+                          idx++;
                         }
-                        idx ++;
                       }
-                    	else{
-                    		idx = get_blk_index(model->grid->layers[i].flp, names[count+j]);
-                        	vals[count+j] = temp[base+idx];
-                    	}
-                    }
-                    count += model->grid->layers[i].flp->n_units;	
-                }	
-                base += model->grid->layers[i].flp->n_units;	
-            }
-
-          /* output instantaneous temperature trace	*/
+                      count += model->grid->layers[i].flp->n_units;
+                  } 
+                  base += model->grid->layers[i].flp->n_units;
+              }
+      
+          }
+          /* output instantaneous temperature trace */
           write_vals(tout, vals, n);
-      }		
+      }   
 
-      /* for computing average	*/
+      /* for computing average  */
       if (model->type == BLOCK_MODEL)
         for(i=0; i < n; i++)
           overall_power[i] += power[i];
@@ -771,7 +777,7 @@ for (i = 0; i < length_v; ++i)
             if(model->grid->layers[i].has_power)
               for(j=0; j < model->grid->layers[i].flp->n_units; j++)
                 overall_power[base+j] += power[base+j];
-            base += model->grid->layers[i].flp->n_units;	
+            base += model->grid->layers[i].flp->n_units;  
         }
 
       lines++;
@@ -780,7 +786,7 @@ for (i = 0; i < length_v; ++i)
   if(!lines)
     fatal("no power numbers in trace file\n");
 
-  /* for computing average	*/
+  /* for computing average  */
   if (model->type == BLOCK_MODEL)
     for(i=0; i < n; i++) {
         overall_power[i] /= lines;
@@ -793,15 +799,15 @@ for (i = 0; i < length_v; ++i)
               overall_power[base+j] /= lines;
               total_power += overall_power[base+j];
           }
-        base += model->grid->layers[i].flp->n_units;	
+        base += model->grid->layers[i].flp->n_units;  
     }
 
-  /* natural convection r_convec iteration, for steady-state only */ 		
+  /* natural convection r_convec iteration, for steady-state only */    
   natural_convergence = 0;
   if (natural) { /* natural convection is used */
       while (!natural_convergence) {
           r_convec_old = model->config->r_convec;
-          /* steady state temperature	*/
+          /* steady state temperature */
           steady_state_temp(model, overall_power, steady_temp);
           avg_sink_temp = calc_sink_temp(model, steady_temp) + SMALL_FOR_CONVEC;
           natural = package_model(model->config, table, size, avg_sink_temp);
@@ -811,11 +817,11 @@ for (i = 0; i < length_v; ++i)
           if (fabs(model->config->r_convec-r_convec_old)<NATURAL_CONVEC_TOL) 
             natural_convergence = 1;
       }
-  }	else /* natural convection is not used, no need for iterations */
-    /* steady state temperature	*/
+  } else /* natural convection is not used, no need for iterations */
+    /* steady state temperature */
     steady_state_temp(model, overall_power, steady_temp);
 
-  /* print steady state results	*/
+  /* print steady state results */
   //BU_3D: Only print steady state results to stdout when DEBUG3D flag is not set
     // printf(" HERE 1\n");
 #if DEBUG3D < 1
@@ -826,13 +832,13 @@ for (i = 0; i < length_v; ++i)
  }
 #endif //end->BU_3D
 
-  /* dump steady state temperatures on to file if needed	*/
+  /* dump steady state temperatures on to file if needed  */
   if (strcmp(model->config->steady_file, NULLFILE))
     dump_temp(model, steady_temp, model->config->steady_file);
 
   // printf(" HERE 2\n");
   /* for the grid model, optionally dump the most recent 
-   * steady state temperatures of the grid cells	
+   * steady state temperatures of the grid cells  
    */
   if (model->type == GRID_MODEL &&
       strcmp(model->config->grid_steady_file, NULLFILE))
@@ -862,7 +868,7 @@ for (i = 0; i < length_v; ++i)
   dump_temp(model, temp, model->config->all_transient_file);
 
 
-  /* cleanup	*/
+  /* cleanup  */
   fclose(pin);
   if (do_transient)
     fclose(tout);

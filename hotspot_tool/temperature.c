@@ -650,7 +650,8 @@ double calc_lc_leakage(int mode, double h, double w, double temp, unit_t* unit, 
 
 	// Some layers with memory banks end up here.
 	if (unit != NULL && strstr(unit->name, "B_") != NULL)
-	{
+	{	
+		// printf("lol");
 		char * p = unit->name;
 		int bank_id = strtol(unit->name+2, NULL, 10);
 		float mode = bank_modes[bank_id];
@@ -846,70 +847,125 @@ void steady_state_temp(RC_model_t *model, double *power, double *temp)
                         
                     else if(strcmp(model->config->type,"2.5D")==0){
                                 printf("Arch type 2.5D: %s\n", model->config->type);
+
+                                int cores_in_z = 0;
+				int cores_in_xy = 0;
+				int banks_in_xy = 0;
+			  	for (k=0;k < model->grid->n_layers; k++){
+			    		if(model->grid->layers[k].has_power){
+				      		if (strstr(model->grid->layers[k].flp->units[0].name, "C_") != NULL){
+				        	cores_in_z++;
+				      		}
+				    	}
+				}
+				for (k=0;k<model->grid->layers[5].flp->n_units;k++){
+				    	if (strstr(model->grid->layers[5].flp->units[k].name, "C_") != NULL){
+				      		cores_in_xy++;
+				    	} 
+				    	if (strstr(model->grid->layers[5].flp->units[k].name, "LC_") != NULL){
+				      		cores_in_xy--;
+				      		banks_in_xy++;
+				    	}
+				}
+				int cores_in_z_t = cores_in_z;
+
 				for(k=0, base=0; k < model->grid->n_layers; k++) {
 				 // printf("k=%d\n",k);					
-					if(model->grid->layers[k].has_power)
+					if(model->grid->layers[k].has_power){
 						for(j=0; j < model->grid->layers[k].flp->n_units; j++) {
 				 			// printf("j=%d,",j);					
 							blk_height = model->grid->layers[k].flp->units[j].height;
 							blk_width = model->grid->layers[k].flp->units[j].width;
-							if (k==5){ // Layer0 : Interposer, Layer 1: TIM, layer 2 in 3Dmem is an SRAM layer its leakage model is different.
-								if ( (j==22) || (j==21) || (j==20) )	// No leakeage in air
-									power_new[base+j] = 0;
-								else{
-									if ( (j>=0) && (j<=3) )	// Leakage for Host core
-										{power_new[base+j] = power[base+j] + ((float) volt[j]/10) * calc_core_leakage(model->config->leakage_mode,blk_height,blk_width,temp[base+j]);
-				 						//printf("YES calc_core_leakage, power = %f, power_new[%d + %d] = %f\n", power[base+j], base, j, power_new[base+j]);
-				 					}
-									else				// Leakage for 3Dmem logic core
-									{
-										if (leakage[j-4] == 0)
-										 	{ power_new[base+j] = 0; //printf("NO lc_leakage\n");
-											}
-										else
-										power_new[base+j] = power[base+j] + calc_lc_leakage(model->config->leakage_mode,blk_height,blk_width,temp[base+j], &model->grid->layers[k].flp->units[j], model->bank_modes);	
-										//printf("YES calc_lc_leakage, power = %f, power_new[%d + %d] = %f\n", power[base+j], base, j, power_new[base+j]);
+
+
+							if (cores_in_z_t > 0){
+								if (j<cores_in_xy){
+									power_new[base+j] = power[base+j] + ((float) volt[j]/10) * calc_core_leakage(model->config->leakage_mode,blk_height,blk_width,temp[base+j]);
+								}
+								else if (j<cores_in_xy+banks_in_xy){
+									if (cores_in_z_t==cores_in_z){
+										power_new[base+j] = power[base+j] + calc_lc_leakage(model->config->leakage_mode,blk_height,blk_width,temp[base+j], &model->grid->layers[k].flp->units[j], model->bank_modes);
 									}
-								}						
-							}
-							else if (k==7 || k==9 | k==11){ // Layer0 : Interposer, Layer 1: TIM, layer 2 in 3Dmem is an SRAM layer its leakage model is different.
-								if ( (j==22) || (j==21) || (j==20) )	// No leakeage in air
-									power_new[base+j] = 0;
-								else{
-									if ( (j>=0) && (j<=3) )	// Leakage for Host core
-										{power_new[base+j] = power[base+j] + ((float) volt[j]/10) * calc_core_leakage(model->config->leakage_mode,blk_height,blk_width,temp[base+j]);
-				 						//printf("YES calc_core_leakage, power = %f, power_new[%d + %d] = %f\n", power[base+j], base, j, power_new[base+j]);
-				 					}
-									else				// Leakage for 3Dmem logic core
-									{
-										if (leakage[j-4] == 0)
-										 	{ power_new[base+j] = 0; //printf("NO lc_leakage\n");
-											}
-										else
-										power_new[base+j] = power[base+j] + calc_leakage(model->config->leakage_mode,blk_height,blk_width,temp[base+j], &model->grid->layers[k].flp->units[j], model->bank_modes);	
-										//printf("YES calc_lc_leakage, power = %f, power_new[%d + %d] = %f\n", power[base+j], base, j, power_new[base+j]);
-									}
-								}						
-							}
-							else{	// layer above the base layer in 3Dmem, have a DRAM leakage model.
-								if ( (j==19) || (j==18) || (j==17) || (j==16))	// No leakeage in air
-									power_new[base+j] = 0;
-								else{
-									if (leakage[j] == 0)
-										{ power_new[base+j] = 0; //printf("NO bank_leakage\n");
-										}
-									else	
+									else{
 										power_new[base+j] = power[base+j] + calc_leakage(model->config->leakage_mode,blk_height,blk_width,temp[base+j], &model->grid->layers[k].flp->units[j], model->bank_modes);
-				 					//printf("YES calc_leakage, power = %f, power_new[%d + %d] = %f\n", power[base+j], base, j, power_new[base+j]);
-				 					// printf("YES");
-								}						
+									}
+								}
+								else{
+									power_new[base+j] = 0;
+								}
+								cores_in_z_t--;
 							}
+							else{
+								if(j<banks_in_xy){
+									power_new[base+j] = power[base+j] + calc_leakage(model->config->leakage_mode,blk_height,blk_width,temp[base+j], &model->grid->layers[k].flp->units[j], model->bank_modes);
+								}
+								else{
+									power_new[base+j] = 0;
+								}
+							}
+
+
+
+							// if (k==5){ // Layer0 : Interposer, Layer 1: TIM, layer 2 in 3Dmem is an SRAM layer its leakage model is different.
+							// 	if ( (j==22) || (j==21) || (j==20) )	// No leakeage in air
+							// 		power_new[base+j] = 0;
+							// 	else{
+							// 		if ( (j>=0) && (j<=3) )	// Leakage for Host core
+							// 			{power_new[base+j] = power[base+j] + ((float) volt[j]/10) * calc_core_leakage(model->config->leakage_mode,blk_height,blk_width,temp[base+j]);
+				 		// 				//printf("YES calc_core_leakage, power = %f, power_new[%d + %d] = %f\n", power[base+j], base, j, power_new[base+j]);
+				 		// 			}
+							// 		else				// Leakage for 3Dmem logic core
+							// 		{
+							// 			if (leakage[j-4] == 0)
+							// 			 	{ power_new[base+j] = 0; //printf("NO lc_leakage\n");
+							// 				}
+							// 			else
+							// 			power_new[base+j] = power[base+j] + calc_lc_leakage(model->config->leakage_mode,blk_height,blk_width,temp[base+j], &model->grid->layers[k].flp->units[j], model->bank_modes);	
+							// 			//printf("YES calc_lc_leakage, power = %f, power_new[%d + %d] = %f\n", power[base+j], base, j, power_new[base+j]);
+							// 		}
+							// 	}						
+							// }
+							// else if (k==7){ // Layer0 : Interposer, Layer 1: TIM, layer 2 in 3Dmem is an SRAM layer its leakage model is different.
+							// 	if ( (j==22) || (j==21) || (j==20) )	// No leakeage in air
+							// 		power_new[base+j] = 0;
+							// 	else{
+							// 		if ( (j>=0) && (j<=3) )	// Leakage for Host core
+							// 			{power_new[base+j] = power[base+j] + ((float) volt[j]/10) * calc_core_leakage(model->config->leakage_mode,blk_height,blk_width,temp[base+j]);
+				 		// 				//printf("YES calc_core_leakage, power = %f, power_new[%d + %d] = %f\n", power[base+j], base, j, power_new[base+j]);
+				 		// 			}
+							// 		else				// Leakage for 3Dmem logic core
+							// 		{
+							// 			if (leakage[j-4] == 0)
+							// 			 	{ power_new[base+j] = 0; //printf("NO lc_leakage\n");
+							// 				}
+							// 			else
+							// 			power_new[base+j] = power[base+j] + calc_leakage(model->config->leakage_mode,blk_height,blk_width,temp[base+j], &model->grid->layers[k].flp->units[j], model->bank_modes);	
+							// 			//printf("YES calc_lc_leakage, power = %f, power_new[%d + %d] = %f\n", power[base+j], base, j, power_new[base+j]);
+							// 		}
+							// 	}						
+							// }
+							// else{	// layer above the base layer in 3Dmem, have a DRAM leakage model.
+							// 	if ( (j==19) || (j==18) || (j==17) || (j==16))	// No leakeage in air
+							// 		power_new[base+j] = 0;
+							// 	else{
+							// 		if (leakage[j] == 0)
+							// 			{ power_new[base+j] = 0; //printf("NO bank_leakage\n");
+							// 			}
+							// 		else	
+							// 			power_new[base+j] = power[base+j] + calc_leakage(model->config->leakage_mode,blk_height,blk_width,temp[base+j], &model->grid->layers[k].flp->units[j], model->bank_modes);
+				 		// 			//printf("YES calc_leakage, power = %f, power_new[%d + %d] = %f\n", power[base+j], base, j, power_new[base+j]);
+				 		// 			// printf("YES");
+							// 	}						
+							// }
 							temp_old[base+j] = temp[base+j]; //copy temp before update
 						}
+						cores_in_z_t--;
+					}
 					base += model->grid->layers[k].flp->n_units;	
 				// printf("\n");					
 				// printf("k=%d",k);					
 				}
+
                         }//end of if memory type
                                 
 				steady_state_temp_grid(model->grid, power_new, temp);
@@ -924,6 +980,28 @@ void steady_state_temp(RC_model_t *model, double *power, double *temp)
 						}
 					base += model->grid->layers[k].flp->n_units;	
 				}
+
+
+
+
+
+
+				// int total_n = 0;
+				// for(i=0; i < model->grid->n_layers; i++){
+				//         if (model->grid->layers[i].has_power){
+				//         	total_n += model->grid->layers[i].flp->n_units;
+				//         }
+				// }
+				// for (i=0;i<total_n;i++){
+				// 	d_temp[i] = temp[i] - temp_old[i];
+				// 	if (d_temp[i] > d_max)
+				// 		d_max = d_temp[i];
+				// }
+
+
+
+
+
 				if (d_max < LEAK_TOL) {// check convergence
 					leak_convg_true = 1;
 					printf("leak_convg_true\n");
@@ -1088,63 +1166,129 @@ void compute_temp(RC_model_t *model, double *power, double *temp, double time_el
                         
                     else if(strcmp(model->config->type,"2.5D")==0){
                                 printf("Arch type 2.5D: %s\n", model->config->type);
+
+                                int cores_in_z = 0;
+				int cores_in_xy = 0;
+				int banks_in_xy = 0;
+			  	for (k=0;k < model->grid->n_layers; k++){
+			    		if(model->grid->layers[k].has_power){
+				      		if (strstr(model->grid->layers[k].flp->units[0].name, "C_") != NULL){
+				        	cores_in_z++;
+				      		}
+				    	}
+				}
+				for (k=0;k<model->grid->layers[5].flp->n_units;k++){
+				    	if (strstr(model->grid->layers[5].flp->units[k].name, "C_") != NULL){
+				      		cores_in_xy++;
+				    	} 
+				    	if (strstr(model->grid->layers[5].flp->units[k].name, "LC_") != NULL){
+				      		cores_in_xy--;
+				      		banks_in_xy++;
+				    	}
+				}
+				int cores_in_z_t = cores_in_z;
+				// printf("%d %d %d\n",cores_in_xy,cores_in_z,cores_in_z_t);
 				for(k=0, base=0; k < model->grid->n_layers; k++) {
 				 // printf("k=%d\n",k);					
-					if(model->grid->layers[k].has_power)
+					if(model->grid->layers[k].has_power){
 						for(j=0; j < model->grid->layers[k].flp->n_units; j++) {
 				 			// printf("j=%d,",j);					
 							blk_height = model->grid->layers[k].flp->units[j].height;
 							blk_width = model->grid->layers[k].flp->units[j].width;
-							if (k==5){ // Layer0 : Interposer, Layer 1: TIM, layer 2 in 3Dmem is an SRAM layer its leakage model is different.
-								if ( (j==22) || (j==21) || (j==20) )	// No leakeage in air. Assuming 4 cores + 16 LC
-									power_new[base+j] = power[base+j];
-								else{
-									if ( (j>=0) && (j<=3) )	// Leakage for Host core. Assuming 4 cores
-										power_new[base+j] = power[base+j] + ((float) volt[j]/10) * calc_core_leakage(model->config->leakage_mode,blk_height,blk_width,temp_first_time[base+j]);
-				 					// printf("YES");
-									else				// Leakage for 3Dmem logic core
-									{
-										if (leakage[j-4] == 0)
-											power_new[base+j] = 0;
-										else
-											power_new[base+j] = power[base+j] + calc_lc_leakage(model->config->leakage_mode,blk_height,blk_width,temp_first_time[base+j], &model->grid->layers[k].flp->units[j], model->bank_modes);	
+
+
+							if (cores_in_z_t > 0){
+								if (j<cores_in_xy){
+									power_new[base+j] = power[base+j] + ((float) volt[j]/10) * calc_core_leakage(model->config->leakage_mode,blk_height,blk_width,temp[base+j]);
+									// printf("%s\n",model->grid->layers[k].flp->units[j].name);
+								}
+								else if (j<cores_in_xy+banks_in_xy){
+									if (cores_in_z_t==cores_in_z){
+										power_new[base+j] = power[base+j] + calc_lc_leakage(model->config->leakage_mode,blk_height,blk_width,temp[base+j], &model->grid->layers[k].flp->units[j], model->bank_modes);
+										// printf("%s\n",model->grid->layers[k].flp->units[j].name);
+
 									}
-								}						
-							}
-							if (k==7 || k==9 | k==11){ // Layer0 : Interposer, Layer 1: TIM, layer 2 in 3Dmem is an SRAM layer its leakage model is different.
-								if ( (j==22) || (j==21) || (j==20) )	// No leakeage in air. Assuming 4 cores + 16 LC
-									power_new[base+j] = power[base+j];
-								else{
-									if ( (j>=0) && (j<=3) )	// Leakage for Host core. Assuming 4 cores
-										power_new[base+j] = power[base+j] + ((float) volt[j]/10) * calc_core_leakage(model->config->leakage_mode,blk_height,blk_width,temp_first_time[base+j]);
-				 					// printf("YES");
-									else				// Leakage for 3Dmem logic core
-									{
-										if (leakage[j-4] == 0)
-											power_new[base+j] = 0;
-										else
-											power_new[base+j] = power[base+j] + calc_leakage(model->config->leakage_mode,blk_height,blk_width,temp_first_time[base+j], &model->grid->layers[k].flp->units[j], model->bank_modes);	
+									else{
+										power_new[base+j] = power[base+j] + calc_leakage(model->config->leakage_mode,blk_height,blk_width,temp[base+j], &model->grid->layers[k].flp->units[j], model->bank_modes);
+										// printf("%s\n",model->grid->layers[k].flp->units[j].name);
+
 									}
-								}						
-							}
-							else{	// layer above the base layer in 3Dmem, have a DRAM leakage model.
-								if ( (j==19) || (j==18) || (j==17) || (j==16))	// No leakeage in air
-									power_new[base+j] = power[base+j];
+								}
 								else{
-										if (leakage[j] == 0)
-											power_new[base+j] = 0;
-										else	
-											power_new[base+j] = power[base+j] + calc_leakage(model->config->leakage_mode,blk_height,blk_width,temp_first_time[base+j], &model->grid->layers[k].flp->units[j], model->bank_modes);
-				 					// printf("YES");
-								}						
+									power_new[base+j] = 0;
+									// printf("%s\n",model->grid->layers[k].flp->units[j].name);
+								}
 							}
+							else{
+								if(j<banks_in_xy){
+									power_new[base+j] = power[base+j] + calc_leakage(model->config->leakage_mode,blk_height,blk_width,temp[base+j], &model->grid->layers[k].flp->units[j], model->bank_modes);
+									// printf("%s\n",model->grid->layers[k].flp->units[j].name);
+
+								}
+								else{
+									power_new[base+j] = 0;
+									// printf("%s\n",model->grid->layers[k].flp->units[j].name);
+								}
+							}
+							
+
+							// if (k==5){ // Layer0 : Interposer, Layer 1: TIM, layer 2 in 3Dmem is an SRAM layer its leakage model is different.
+							// 	if ( (j==22) || (j==21) || (j==20) )	// No leakeage in air. Assuming 4 cores + 16 LC
+							// 		power_new[base+j] = power[base+j];
+							// 	else{
+							// 		if ( (j>=0) && (j<=3) )	// Leakage for Host core. Assuming 4 cores
+							// 			power_new[base+j] = power[base+j] + ((float) volt[j]/10) * calc_core_leakage(model->config->leakage_mode,blk_height,blk_width,temp_first_time[base+j]);
+				 		// 			// printf("YES");
+							// 		else				// Leakage for 3Dmem logic core
+							// 		{
+							// 			if (leakage[j-4] == 0)
+							// 				power_new[base+j] = 0;
+							// 			else
+							// 				power_new[base+j] = power[base+j] + calc_lc_leakage(model->config->leakage_mode,blk_height,blk_width,temp_first_time[base+j], &model->grid->layers[k].flp->units[j], model->bank_modes);	
+							// 		}
+							// 	}						
+							// }
+							// if (k==7){ // Layer0 : Interposer, Layer 1: TIM, layer 2 in 3Dmem is an SRAM layer its leakage model is different.
+							// 	if ( (j==22) || (j==21) || (j==20) )	// No leakeage in air. Assuming 4 cores + 16 LC
+							// 		power_new[base+j] = power[base+j];
+							// 	else{
+							// 		if ( (j>=0) && (j<=3) )	// Leakage for Host core. Assuming 4 cores
+							// 			power_new[base+j] = power[base+j] + ((float) volt[j]/10) * calc_core_leakage(model->config->leakage_mode,blk_height,blk_width,temp_first_time[base+j]);
+				 		// 			// printf("YES");
+							// 		else				// Leakage for 3Dmem logic core
+							// 		{
+							// 			if (leakage[j-4] == 0)
+							// 				power_new[base+j] = 0;
+							// 			else
+							// 				power_new[base+j] = power[base+j] + calc_leakage(model->config->leakage_mode,blk_height,blk_width,temp_first_time[base+j], &model->grid->layers[k].flp->units[j], model->bank_modes);	
+							// 		}
+							// 	}						
+							// }
+							// else{	// layer above the base layer in 3Dmem, have a DRAM leakage model.
+							// 	if ( (j==19) || (j==18) || (j==17) || (j==16))	// No leakeage in air
+							// 		power_new[base+j] = power[base+j];
+							// 	else{
+							// 			if (leakage[j] == 0)
+							// 				power_new[base+j] = 0;
+							// 			else	
+							// 				power_new[base+j] = power[base+j] + calc_leakage(model->config->leakage_mode,blk_height,blk_width,temp_first_time[base+j], &model->grid->layers[k].flp->units[j], model->bank_modes);
+				 		// 			// printf("YES");
+							// 	}						
+							// }
+
+
+
                                                         //printf ("\nPower: %.3f, Power_calc: %.3f, j: %d", power[base+j], power_new[base+j], j);
 							//temp_old[base+j] = temp[base+j]; //copy temp before update
 						}
+						cores_in_z_t--;
+					}
 					base += model->grid->layers[k].flp->n_units;	
 				// printf("\n");					
 				// printf("k=%d",k);					
 				}
+
+				
                         }//end of if memory type
 
 			// printf("Calling compute_temp_grid\n");					
