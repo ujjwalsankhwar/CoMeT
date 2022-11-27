@@ -85,19 +85,23 @@ def gen_floorplan(floorplan, interposer, format = 'svg', core_dim=[], mem_dim=[]
       j=j+1
     i=i-1
   #mem
-  start_mem = corex*corey
-  i=memy-1
-  j=0
-  while (i>-1):
+  start_mem = corex*corey#*corez
+  mem_size = memx*memy#*memz
+  nth_mem = 0
+  while (nth_mem<1):
+    i=memy-1
     j=0
-    while (j<memx):
-      print >> outputobj,'''<line x1="%d" y1="%d" x2="%d" y2="%d" style="stroke:blue;stroke-width:30" />'''%(arr[start_mem+i*memx+j][2],arr[start_mem+i*memx+j][3],arr[start_mem+i*memx+j][2]+arr[start_mem+i*memx+j][0],arr[start_mem+i*memx+j][3])
-      print >> outputobj,'''<line x1="%d" y1="%d" x2="%d" y2="%d" style="stroke:blue;stroke-width:30" />'''%(arr[start_mem+i*memx+j][2],arr[start_mem+i*memx+j][3],arr[start_mem+i*memx+j][2],arr[start_mem+i*memx+j][3]+arr[start_mem+i*memx+j][1])
-      print >> outputobj,'''<line x1="%d" y1="%d" x2="%d" y2="%d" style="stroke:blue;stroke-width:30" />'''%(arr[start_mem+i*memx+j][2]+arr[start_mem+i*memx+j][0],arr[start_mem+i*memx+j][3],arr[start_mem+i*memx+j][2]+arr[start_mem+i*memx+j][0],arr[start_mem+i*memx+j][3]+arr[start_mem+i*memx+j][1])
-      print >> outputobj,'''<line x1="%d" y1="%d" x2="%d" y2="%d" style="stroke:blue;stroke-width:30" />'''%(arr[start_mem+i*memx+j][2],arr[start_mem+i*memx+j][3]+arr[start_mem+i*memx+j][1],arr[start_mem+i*memx+j][2]+arr[start_mem+i*memx+j][0],arr[start_mem+i*memx+j][3]+arr[start_mem+i*memx+j][1])
-      print >> outputobj,'''<text x="%d" y="%d" fill="black" text_anchor="start" style="font-size:570" > LC%d_%d </text>'''%(arr[start_mem+i*memx+j][2]+100,arr[start_mem+i*memx+j][3]+500,memy-1-i,j)
-      j=j+1
-    i=i-1
+    while (i>-1):
+      j=0
+      while (j<memx):
+        print >> outputobj,'''<line x1="%d" y1="%d" x2="%d" y2="%d" style="stroke:blue;stroke-width:30" />'''%(arr[start_mem+nth_mem*mem_size+i*memx+j][2],arr[start_mem+nth_mem*mem_size+i*memx+j][3],arr[start_mem+nth_mem*mem_size+i*memx+j][2]+arr[start_mem+nth_mem*mem_size+i*memx+j][0],arr[start_mem+nth_mem*mem_size+i*memx+j][3])
+        print >> outputobj,'''<line x1="%d" y1="%d" x2="%d" y2="%d" style="stroke:blue;stroke-width:30" />'''%(arr[start_mem+nth_mem*mem_size+i*memx+j][2],arr[start_mem+nth_mem*mem_size+i*memx+j][3],arr[start_mem+nth_mem*mem_size+i*memx+j][2],arr[start_mem+nth_mem*mem_size+i*memx+j][3]+arr[start_mem+nth_mem*mem_size+i*memx+j][1])
+        print >> outputobj,'''<line x1="%d" y1="%d" x2="%d" y2="%d" style="stroke:blue;stroke-width:30" />'''%(arr[start_mem+nth_mem*mem_size+i*memx+j][2]+arr[start_mem+nth_mem*mem_size+i*memx+j][0],arr[start_mem+nth_mem*mem_size+i*memx+j][3],arr[start_mem+nth_mem*mem_size+i*memx+j][2]+arr[start_mem+nth_mem*mem_size+i*memx+j][0],arr[start_mem+nth_mem*mem_size+i*memx+j][3]+arr[start_mem+nth_mem*mem_size+i*memx+j][1])
+        print >> outputobj,'''<line x1="%d" y1="%d" x2="%d" y2="%d" style="stroke:blue;stroke-width:30" />'''%(arr[start_mem+nth_mem*mem_size+i*memx+j][2],arr[start_mem+nth_mem*mem_size+i*memx+j][3]+arr[start_mem+nth_mem*mem_size+i*memx+j][1],arr[start_mem+nth_mem*mem_size+i*memx+j][2]+arr[start_mem+nth_mem*mem_size+i*memx+j][0],arr[start_mem+nth_mem*mem_size+i*memx+j][3]+arr[start_mem+nth_mem*mem_size+i*memx+j][1])
+        print >> outputobj,'''<text x="%d" y="%d" fill="black" text_anchor="start" style="font-size:570" > LC%d_%d </text>'''%(arr[start_mem+nth_mem*mem_size+i*memx+j][2]+100,arr[start_mem+nth_mem*mem_size+i*memx+j][3]+500,memy-1-i,j)
+        j=j+1
+      i=i-1
+    nth_mem=nth_mem+1
   start_air = start_mem + memx*memy
 	#X1
   print >> outputobj,'''<line x1="%d" y1="%d" x2="%d" y2="%d" style="stroke:blue;stroke-width:30" />'''%(arr[start_air][2],arr[start_air][3],arr[start_air][2]+arr[start_air][0],arr[start_air][3])
@@ -130,6 +134,7 @@ if __name__ == '__main__':
   core_dim = []
   mem_dim = []
   outputfilename = None
+  outputfolder = ''
   formatdefaultoutputfile = {'svg': 'floorplan.svg', 'text': 'floorplan.txt'}
   validformats = ('svg', 'text')
   format = 'svg'
@@ -138,7 +143,7 @@ if __name__ == '__main__':
   #   print 'Usage: %s [-h|--help (help)] [-c|--core (core)] [-m|--mem (mem)] [-d <floorplan (.)>]  [-o|--output (output filename/"-" for stdout)]  [-f|--format (options: %s)]' % (sys.argv[0], validformats)
 
   try:
-    opts, args = getopt.getopt(sys.argv[1:], "hd:c:m:o:f:i:", [ "help","core", "mem", "output=", "format=" ])
+    opts, args = getopt.getopt(sys.argv[1:], "hd:c:m:o:f:i:z:", [ "help","core", "mem", "output=", "format=" ])
   except getopt.GetoptError, e:
     print e
     #usage()
@@ -153,6 +158,8 @@ if __name__ == '__main__':
       interposer = a
     elif o == '-o' or o == '--output':
       outputfilename = a
+    elif o == '-z':
+      outputfolder = a
     # elif o == '-f' or o == '--format':
     #   if a not in validformats:
     #     print >> sys.stderr, '%s is not a valid format' % a
@@ -175,6 +182,9 @@ if __name__ == '__main__':
   if outputfilename == '-':
     output = sys.stdout
   else:
-    output = open(outputfilename, 'w')
+    output = open(outputfolder+outputfilename, 'w')
   gen_floorplan(floorplan, interposer, format = format, core_dim=core_dim, mem_dim=mem_dim, outputobj = output)
   print("End of Code")
+
+
+#$ python gen_floorplan.py -d ../config/hotspot/2_5D_64core/core_and_mem_ctrl.flp -i ../config/hotspot/2_5D_64core/interposer.flp -c 8,8,1 -m 4,4,8 -z ../config/hotspot/2_5D_64core/
