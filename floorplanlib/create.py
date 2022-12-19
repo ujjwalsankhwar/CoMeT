@@ -533,23 +533,23 @@ class CoreAndMemoryControllerLayer_2_5D(ThermalLayer):
                 h = 0.5 * ((2*self.memory_controllers[0].total_height + self.mem_mem_distance) - self.cores.total_height)
                 f.write('{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.6f}\t{}\t{}\n'.format(
                     'X1',
-                    self.cores.total_width.meters, h.meters,
+                    self.cores.total_width.meters/2, h.meters,
                     (self.memory_controllers[0].total_width + self.core_mem_distance).meters, 0,
                     AIR_SPECIFIC_HEAT_CAPACITY, AIR_THERMAL_RESISTIVITY))
                 f.write('{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.6f}\t{}\t{}\n'.format(
                     'X2',
-                    0, 0,
-                    (self.memory_controllers[0].total_width + self.core_mem_distance).meters, 0,
+                    self.cores.total_width.meters/2, h.meters,
+                    (self.memory_controllers[0].total_width + self.core_mem_distance).meters + self.cores.total_width.meters/2, 0,
                     AIR_SPECIFIC_HEAT_CAPACITY, AIR_THERMAL_RESISTIVITY))
                 f.write('{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.6f}\t{}\t{}\n'.format(
                     'X3',
-                    self.cores.total_width.meters, h.meters,
-                    (self.memory_controllers[0].total_width + self.core_mem_distance).meters, (2*self.memory_controllers[0].total_height + self.mem_mem_distance - h).meters,
+                    self.cores.total_width.meters/2, h.meters,
+                    (self.memory_controllers[0].total_width + self.core_mem_distance).meters, (self.cores.total_height + h).meters,
                     AIR_SPECIFIC_HEAT_CAPACITY, AIR_THERMAL_RESISTIVITY))
                 f.write('{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.6f}\t{}\t{}\n'.format(
                     'X4',
-                    0, 0,
-                    (self.memory_controllers[0].total_width + self.core_mem_distance).meters, (2*self.memory_controllers[0].total_height + self.mem_mem_distance - h).meters,
+                    self.cores.total_width.meters/2, h.meters,
+                    (self.memory_controllers[0].total_width + self.core_mem_distance).meters + self.cores.total_width.meters/2, (self.cores.total_height + h).meters,
                     AIR_SPECIFIC_HEAT_CAPACITY, AIR_THERMAL_RESISTIVITY))
                 # add air block between memory and memory
                 f.write('{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.6f}\t{}\t{}\n'.format(
@@ -762,23 +762,23 @@ class CoreAndMemoryLayer_2_5D(ThermalLayer):
                 h = 0.5 * ((2*self.memory[0].total_height + self.mem_mem_distance) - self.cores.total_height)
                 f.write('{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.6f}\t{}\t{}\n'.format(
                     'X1',
-                    self.cores.total_width.meters, h.meters,
+                    self.cores.total_width.meters/2, h.meters,
                     (self.memory[0].total_width + self.core_mem_distance).meters, 0,
                     AIR_SPECIFIC_HEAT_CAPACITY, AIR_THERMAL_RESISTIVITY))
                 f.write('{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.6f}\t{}\t{}\n'.format(
                     'X2',
-                    0, 0,
-                    (self.memory[0].total_width + self.core_mem_distance).meters, 0,
+                    self.cores.total_width.meters/2, h.meters,
+                    (self.memory[0].total_width + self.core_mem_distance).meters + self.cores.total_width.meters/2, 0,
                     AIR_SPECIFIC_HEAT_CAPACITY, AIR_THERMAL_RESISTIVITY))
                 f.write('{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.6f}\t{}\t{}\n'.format(
                     'X3',
-                    self.cores.total_width.meters, h.meters,
-                    (self.memory[0].total_width + self.core_mem_distance).meters, (2*self.memory[0].total_height + self.mem_mem_distance - h).meters,
+                    self.cores.total_width.meters/2, h.meters,
+                    (self.memory[0].total_width + self.core_mem_distance).meters, (self.cores.total_height + h).meters,
                     AIR_SPECIFIC_HEAT_CAPACITY, AIR_THERMAL_RESISTIVITY))
                 f.write('{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.6f}\t{}\t{}\n'.format(
                     'X4',
-                    0, 0,
-                    (self.memory[0].total_width + self.core_mem_distance).meters, (2*self.memory[0].total_height + self.mem_mem_distance - h).meters,
+                    self.cores.total_width.meters/2, h.meters,
+                    (self.memory[0].total_width + self.core_mem_distance).meters + self.cores.total_width.meters/2, (self.cores.total_height + h).meters,
                     AIR_SPECIFIC_HEAT_CAPACITY, AIR_THERMAL_RESISTIVITY))
                 # add air block between memory and memory
                 f.write('{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.6f}\t{}\t{}\n'.format(
@@ -817,7 +817,45 @@ class CoreAndMemoryLayer_2_5D(ThermalLayer):
 
 
 
+class PadWithAir(ThermalLayer):
+    """ wrap a layer with air to match the given dimension """
+    def __init__(self, total_width, total_height, thickness,name,force=None):
+        super().__init__(name=name)
+        self._total_width = total_width
+        self._total_height = total_height
+        self.thickness = thickness
+        self.force = {'left': False, 'right': False, 'top': False, 'bottom': False} if force is None else force
 
+    @property
+    def total_width(self):
+        return self._total_width
+
+    @property
+    def total_height(self):
+        return self._total_height
+
+    def write_floorplan(self, directory):
+        with open(self._get_floorplan_filename(directory), 'w') as f:
+            f.write('# Line Format: <unit-name>\\t<width>\\t<height>\\t<left-x>\\t<bottom-y>\\t[<specific-heat-capacity>\\t<thermal-resistivity>]\n')
+
+            # pad right
+            f.write('{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.6f}\t{}\t{}\n'.format(
+                'X4',
+                self.total_width.meters, self.total_height.meters,
+                0, 0,
+                AIR_SPECIFIC_HEAT_CAPACITY, AIR_THERMAL_RESISTIVITY))
+
+    def _has_power_consumption(self):
+        return True
+
+    def _specific_heat_capacity(self):
+        return AIR_SPECIFIC_HEAT_CAPACITY
+
+    def _thermal_resistivity(self):
+        return AIR_THERMAL_RESISTIVITY
+
+    def _thickness(self):
+        return self.thickness
 
 
 class PadWithAirLayer(ThermalLayer):
@@ -893,10 +931,12 @@ class PadWithAirLayer(ThermalLayer):
 
 class PadWithAirLayer_2_5D(ThermalLayer):
     """ wrap a layer with air to match the given dimension """
-    def __init__(self, drams, total_width, total_height, content, force=None):
+    def __init__(self, drams, total_width, total_height, cores_width, cores_height, content, force=None):
         super().__init__(name=content[0].name)
         self._total_width = total_width
         self._total_height = total_height
+        self.cores_width = cores_width
+        self.cores_height = cores_height
         self.content = content
         self.force = {'left': False, 'right': False, 'top': False, 'bottom': False} if force is None else force
         self.drams = drams
@@ -915,36 +955,65 @@ class PadWithAirLayer_2_5D(ThermalLayer):
             for i in range(self.drams):
                 f.write(self.content[i].create_floorplan_elements())
 
-            if self.content[0].pos_offset[1] > Length(0) or self.force.get('bottom'):
+            h = 0.5 * (self.total_height - self.cores_height)
+            # if self.content[0].pos_offset[1] > Length(0) or self.force.get('bottom'):
+            if self.content[0].pos_offset[1] > Length(0):
                 # pad bottom
                 f.write('{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.6f}\t{}\t{}\n'.format(
                     'X1',
                     self.content[0].total_width.meters, self.content[0].pos_offset[1].meters,
                     0, 0,
                     AIR_SPECIFIC_HEAT_CAPACITY, AIR_THERMAL_RESISTIVITY))
+            else:
+                f.write('{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.6f}\t{}\t{}\n'.format(
+                    'X1',
+                    (self.content[1].pos_offset[0] - self.content[0].pos_offset[0] - self.content[0].total_width).meters/2, h.meters,
+                    (self.content[0].pos_offset[0] + self.content[0].total_width).meters, 0,
+                    AIR_SPECIFIC_HEAT_CAPACITY, AIR_THERMAL_RESISTIVITY))
 
-            if self.content[1].pos_offset[1] > Length(0) or self.force.get('bottom'):
+            # if self.content[1].pos_offset[1] > Length(0) or self.force.get('bottom'):
+            if self.content[1].pos_offset[1] > Length(0):
                 # pad bottom
                 f.write('{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.6f}\t{}\t{}\n'.format(
                     'X2',
                     self.content[1].total_width.meters, self.content[1].pos_offset[1].meters,
                     self.content[1].pos_offset[0].meters, 0,
                     AIR_SPECIFIC_HEAT_CAPACITY, AIR_THERMAL_RESISTIVITY))
+            else:
+                f.write('{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.6f}\t{}\t{}\n'.format(
+                    'X2',
+                    (self.content[1].pos_offset[0] - self.content[0].pos_offset[0] - self.content[0].total_width).meters/2, h.meters,
+                    (self.content[0].pos_offset[0] + self.content[0].total_width).meters + (self.content[1].pos_offset[0] - self.content[0].pos_offset[0] - self.content[0].total_width).meters/2, 0,
+                    AIR_SPECIFIC_HEAT_CAPACITY, AIR_THERMAL_RESISTIVITY))
 
-            if self.content[2].pos_offset[1] + self.content[2].total_height < self.total_height or self.force.get('top'):
+            # if self.content[2].pos_offset[1] + self.content[2].total_height < self.total_height or self.force.get('top'):
+            if self.content[2].pos_offset[1] + self.content[2].total_height < self.total_height:
                 # pad top
                 f.write('{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.6f}\t{}\t{}\n'.format(
                     'X3',
                     self.content[2].total_width.meters, (self.total_height - self.content[2].pos_offset[1] - self.content[2].total_height).meters,
                     0, (self.content[2].pos_offset[1] + self.content[2].total_height).meters,
                     AIR_SPECIFIC_HEAT_CAPACITY, AIR_THERMAL_RESISTIVITY))
+            else:
+                f.write('{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.6f}\t{}\t{}\n'.format(
+                    'X3',
+                    (self.content[1].pos_offset[0] - self.content[0].pos_offset[0] - self.content[0].total_width).meters/2, h.meters,
+                    (self.content[0].pos_offset[0] + self.content[0].total_width).meters, (self.total_height - h).meters,
+                    AIR_SPECIFIC_HEAT_CAPACITY, AIR_THERMAL_RESISTIVITY))
 
-            if self.content[3].pos_offset[1] + self.content[2].total_height < self.total_height or self.force.get('top'):
+            # if self.content[3].pos_offset[1] + self.content[2].total_height < self.total_height or self.force.get('top'):
+            if self.content[3].pos_offset[1] + self.content[2].total_height < self.total_height:
                 # pad top
                 f.write('{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.6f}\t{}\t{}\n'.format(
                     'X4',
                     self.content[3].total_width.meters, (self.total_height - self.content[3].pos_offset[1] - self.content[3].total_height).meters,
                     self.content[3].pos_offset[0].meters, (self.content[3].pos_offset[1] + self.content[3].total_height).meters,
+                    AIR_SPECIFIC_HEAT_CAPACITY, AIR_THERMAL_RESISTIVITY))
+            else:
+                f.write('{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.6f}\t{}\t{}\n'.format(
+                    'X4',
+                    (self.content[1].pos_offset[0] - self.content[0].pos_offset[0] - self.content[0].total_width).meters/2, h.meters,
+                    (self.content[0].pos_offset[0] + self.content[0].total_width).meters + (self.content[1].pos_offset[0] - self.content[0].pos_offset[0] - self.content[0].total_width).meters/2, (self.total_height - h).meters,
                     AIR_SPECIFIC_HEAT_CAPACITY, AIR_THERMAL_RESISTIVITY))
 
             # pad between memory
@@ -961,16 +1030,28 @@ class PadWithAirLayer_2_5D(ThermalLayer):
                 AIR_SPECIFIC_HEAT_CAPACITY, AIR_THERMAL_RESISTIVITY))
 
             #pad centre
-            f.write('{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.6f}\t{}\t{}\n'.format(
-                'X7',
-                (self.content[1].pos_offset[0] - self.content[0].pos_offset[0] - self.content[0].total_width).meters, self.total_height.meters,
-                (self.content[0].pos_offset[0] + self.content[0].total_width).meters, 0,
-                AIR_SPECIFIC_HEAT_CAPACITY, AIR_THERMAL_RESISTIVITY))
-            f.write('{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.6f}\t{}\t{}\n'.format(
-                'X8',
-                0, 0,
-                (self.content[0].pos_offset[0] + self.content[0].total_width).meters, 0,
-                AIR_SPECIFIC_HEAT_CAPACITY, AIR_THERMAL_RESISTIVITY))
+            if self.total_height == 2*self.content[0].total_height + self.content[2].pos_offset[1] - self.content[0].pos_offset[1] - self.content[0].total_height:
+                f.write('{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.6f}\t{}\t{}\n'.format(
+                    'X7',
+                    (self.content[1].pos_offset[0] - self.content[0].pos_offset[0] - self.content[0].total_width).meters/2, (self.total_height - 2*h).meters,
+                    (self.content[0].pos_offset[0] + self.content[0].total_width).meters, h.meters,
+                    AIR_SPECIFIC_HEAT_CAPACITY, AIR_THERMAL_RESISTIVITY))
+                f.write('{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.6f}\t{}\t{}\n'.format(
+                    'X8',
+                    (self.content[1].pos_offset[0] - self.content[0].pos_offset[0] - self.content[0].total_width).meters/2, (self.total_height - 2*h).meters,
+                    (self.content[0].pos_offset[0] + self.content[0].total_width).meters + (self.content[1].pos_offset[0] - self.content[0].pos_offset[0] - self.content[0].total_width).meters/2, h.meters,
+                    AIR_SPECIFIC_HEAT_CAPACITY, AIR_THERMAL_RESISTIVITY))
+            else:
+                f.write('{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.6f}\t{}\t{}\n'.format(
+                    'X7',
+                    (self.content[1].pos_offset[0] - self.content[0].pos_offset[0] - self.content[0].total_width).meters/2, self.total_height.meters,
+                    (self.content[0].pos_offset[0] + self.content[0].total_width).meters, 0,
+                    AIR_SPECIFIC_HEAT_CAPACITY, AIR_THERMAL_RESISTIVITY))
+                f.write('{}\t{:.6f}\t{:.6f}\t{:.6f}\t{:.6f}\t{}\t{}\n'.format(
+                    'X8',
+                    (self.content[1].pos_offset[0] - self.content[0].pos_offset[0] - self.content[0].total_width).meters/2, self.total_height.meters,
+                    (self.content[0].pos_offset[0] + self.content[0].total_width).meters + (self.content[1].pos_offset[0] - self.content[0].pos_offset[0] - self.content[0].total_width).meters/2, 0,
+                    AIR_SPECIFIC_HEAT_CAPACITY, AIR_THERMAL_RESISTIVITY))
 
     def _has_power_consumption(self):
         return self.content[0]._has_power_consumption()
@@ -1063,7 +1144,7 @@ def flp_to_pdf(filename):
 def main():
     parser = argparse.ArgumentParser()
     required = parser.add_argument_group('required named arguments')
-    required.add_argument("--mode", help="chip architecture", choices=('DDR', '3Dmem', '2.5D', '3D', '2.5D+'), required=True)
+    required.add_argument("--mode", help="chip architecture", choices=('DDR', '3Dmem', '2.5D', '3D'), required=True)
     cores = parser.add_argument_group('cores')
     cores.add_argument("--cores", help="number of cores", type=dimension_extend_to_3d, required=True)
     cores.add_argument("--corex", help="size of each core (in dimension x)", type=length, required=True)
@@ -1071,7 +1152,7 @@ def main():
     cores.add_argument("--core_thickness", help="thickness of the core silicon layer", type=length, required=False, default='50um')
     cores.add_argument("--subcore-template", help="template for sub-core components", type=floorplan_file, required=False)
     drams = parser.add_argument_group('drams')
-    drams.add_argument("--drams",help="number of DRAMS", required=False, default=4)
+    drams.add_argument("--drams",help="number of DRAMS", required=False, default=1)
     banks = parser.add_argument_group('memory banks')
     banks.add_argument("--banks", help="number of memory banks", type=dimension_2d_or_3d, required=True)
     banks.add_argument("--bankx", help="size of each memory bank (in dimension x)", type=length, required=True)
@@ -1081,6 +1162,7 @@ def main():
     parser.add_argument("--mem_mem_distance", help="only 2.5D: distance between memory and memory on interposer (default: 7mm)", type=length, required=False, default='3mm')
     parser.add_argument("--tim_thickness", help="thickness of the TIM", type=length, required=False, default='20um')
     parser.add_argument("--interposer_thickness", help="only 2.5D: thickness of the interposer", type=length, required=False, default='50um')
+    parser.add_argument("--model_air", help="model air in 3Dmem", type=bool,required=False, default=False)
     required.add_argument("--out", help="directory in which the floorplan is stored", required=True)
     args = parser.parse_args()    
 
@@ -1109,7 +1191,7 @@ def main():
         mem.add_layer(TIMLayer(banks_2d, args.bankx, args.banky, args.tim_thickness, name='mem_tim'))
         mem.write_files(args.out)
 
-    elif args.mode == '3Dmem':
+    elif args.mode == '3Dmem' and args.model_air == False:
         if len(args.banks) != 3:
             parser.error('banks must be 3D in 3Dmem mode. Example: --banks 4x4x2')
 
@@ -1131,7 +1213,65 @@ def main():
         mem.add_layer(tim)
         mem.write_files(args.out)
 
-    elif args.mode == '2.5D':
+    elif args.mode == '3Dmem' and args.model_air == True:
+        if len(args.banks) != 3:
+            parser.error('banks must be 3D in 3Dmem mode. Example: --banks 4x4x2')
+
+        cores_width = args.cores[0] * args.corex
+        cores_height = args.cores[1] * args.corey
+        mem_width = args.banks[0] * args.bankx
+        mem_height = args.banks[1] * args.banky
+        banks_per_layer = args.banks[0] * args.banks[1]
+        banks_2d = (args.banks[0], args.banks[1])
+
+        total_width = cores_width + args.core_mem_distance + mem_width
+        total_height = max(cores_height, mem_height)
+
+        # core_tim = TIMLayer(cores_2d, args.corex, args.corey, args.tim_thickness, name='core_tim')
+        core_tim = TIMLayer((1, 1), total_width, total_height, args.tim_thickness, name='core_tim')
+        mem_tim = TIMLayer((1, 1), total_width, total_height, args.tim_thickness, name='mem_tim')
+        # core_interposer = InterposerLayer((1, 1), total_width, total_height, args.interposer_thickness, name='core_interposer')
+        # mem_interposer = InterposerLayer((1, 1), total_width, total_height, args.interposer_thickness, name='mem_interposer')
+
+        core_offset = (
+            Length(0),  # x
+            Length(0)  # y
+        )
+
+        mem_offset = (
+            cores_width + args.core_mem_distance,  # x
+            Length(0) if mem_height > cores_height else 0.5 * (cores_height - mem_height)  # y
+        )
+
+        core = ThermalStack('cores')
+        # core.add_layer(core_interposer)
+        # core.add_layer(core_tim)
+        for i in range(args.cores[2]):
+            core_layer = CoreLayer(cores_2d, args.corex, args.corey, args.core_thickness, name=f'cores_{i+1}', pos_offset=core_offset, nb_offset=i*cores_per_layer, subcomponent_template=args.subcore_template)
+            core.add_layer(PadWithAirLayer(total_width, total_height, core_layer, force={'right': True}))
+            # core.add_layer(CoreLayer(cores_2d, args.corex, args.corey, args.core_thickness, name=f'cores_{i+1}', nb_offset=i*cores_per_layer, subcomponent_template=args.subcore_template))
+            core.add_layer(core_tim)
+
+        for i in range(args.banks[2]+1-args.cores[2]):
+            core.add_layer(PadWithAir(total_width, total_height, args.bank_thickness, name=f'air_{i+1}'))
+            core.add_layer(core_tim)
+
+        core.write_files(args.out)
+
+        mem = ThermalStack('mem')
+        # mem.add_layer(mem_interposer)
+        # mem.add_layer(mem_tim)
+        mem_ctrl = MemoryControllerLayer(banks_2d, args.bankx, args.banky, args.bank_thickness, name='mem_ctrl', pos_offset=mem_offset)
+        mem.add_layer(PadWithAirLayer(total_width, total_height, mem_ctrl, force={'left': True, 'top': True, 'bottom': True}))
+        
+        for i in range(args.banks[2]):
+            mem.add_layer(mem_tim)
+            mem_banks =   MemoryLayer(banks_2d, args.bankx, args.banky, args.bank_thickness, name=f'mem_bank_{i+1}', pos_offset=mem_offset, nb_offset=i*banks_per_layer)
+            mem.add_layer(PadWithAirLayer(total_width, total_height, mem_banks, force={'left': True, 'top': True, 'bottom': True}))
+        mem.add_layer(mem_tim)
+        mem.write_files(args.out)
+
+    elif args.mode == '2.5D' and int(args.drams) == 1:
         if len(args.banks) != 3:
             parser.error('banks must be 3D in 2.5D mode. Example: --banks 4x4x2')
 
@@ -1189,7 +1329,7 @@ def main():
 
 
 
-    elif args.mode == '2.5D+':
+    elif args.mode == '2.5D':
 
         if len(args.banks) != 3:
             parser.error('banks must be 3D in 2.5D mode. Example: --banks 4x4x2')
@@ -1202,8 +1342,9 @@ def main():
         mem_width = args.banks[0] * args.bankx
         mem_height = args.banks[1] * args.banky
         num_drams = int(args.drams)
-        banks_per_layer = int(args.banks[0] * args.banks[1] * num_drams)
-        banks_per_dram = args.banks[0] * args.banks[1]
+        banks_per_layer = args.banks[0] * args.banks[1] * num_drams
+        banks_per_dram = args.banks[0] * args.banks[1] * args.banks[2]
+        banks_per_dram_layer = args.banks[0] * args.banks[1]
         banks_2d = (args.banks[0], args.banks[1])
         curr_nb_offset_core = 0
         curr_nb_offset_mem = []
@@ -1232,8 +1373,8 @@ def main():
             name='core_and_mem_ctrl',
             subcore_template=args.subcore_template))
 
-        for i in range(num_drams):
-            curr_nb_offset_mem[i] = i*banks_per_dram
+        # for i in range(num_drams):
+        #     curr_nb_offset_mem[i] = i*banks_per_dram
 
         for i in range(min(args.cores[2]-1,args.banks[2])):
             curr_nb_offset_core = curr_nb_offset_core + cores_per_layer
@@ -1248,7 +1389,7 @@ def main():
                 name=f'core_and_mem_bank_{i+1}',
                 subcore_template=args.subcore_template))
             for j in range(num_drams):
-                curr_nb_offset_mem[j] = curr_nb_offset_mem[j] + banks_per_layer
+                curr_nb_offset_mem[j] = curr_nb_offset_mem[j] + banks_per_dram_layer
 
 
         for i in range(min(args.cores[2]-1,args.banks[2]),args.banks[2]):
@@ -1256,9 +1397,9 @@ def main():
             mem_banks = []
             for j in range(num_drams):
                 mem_banks.append(MemoryLayer(banks_2d, args.bankx, args.banky, args.bank_thickness, name=f'mem_bank_{i+1}', pos_offset=mem_offset[j], nb_offset=curr_nb_offset_mem[j]))
-            stack.add_layer(PadWithAirLayer_2_5D(num_drams, total_width, total_height, mem_banks, force={'top': True, 'bottom': True}))
+            stack.add_layer(PadWithAirLayer_2_5D(num_drams, total_width, total_height, cores_width, cores_height, mem_banks, force={'top': True, 'bottom': True}))
             for j in range(num_drams):
-                curr_nb_offset_mem[j] = curr_nb_offset_mem[j] + banks_per_layer
+                curr_nb_offset_mem[j] = curr_nb_offset_mem[j] + banks_per_dram_layer
         stack.add_layer(tim)
         stack.write_files(args.out)
 
