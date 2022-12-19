@@ -203,6 +203,12 @@ def gen_mem_header():
     for b in range(NUM_BANKS):
       mem_header = mem_header + "B_" + str(b) + "\t"
 
+    # for bz in range (banks_in_z):
+    #     for bi in range(4):
+    #         for b in range ((banks_in_x*banks_in_y)//4):
+    #             mem_header = mem_header + "B_" + str(b + (bz*banks_in_x*banks_in_y)//4 + bi*NUM_BANKS//4) + "\t"
+
+
     # for z in range(0,banks_in_z):
     #     for x in range(0,banks_in_x):
     #         for y in range(0,banks_in_y):
@@ -224,7 +230,7 @@ def gen_ptrace_header():
     # For 3D: core is at the top, whereas for 3Dmem, 2.5D config. the 3Dmem is at the bottom.
     # Creating Header
     ptrace_header = ''
-    if type_of_stack=="2.5D" or type_of_stack=="2.5D+":
+    if type_of_stack=="2.5D":
         # ptrace_header=ptrace_header + "I0" + "\t" 
         for z in range(0,cores_in_z):
             for x in range(0,cores_in_x):
@@ -232,17 +238,24 @@ def gen_ptrace_header():
                     ptrace_header=ptrace_header + "C_" + str(z*cores_in_x*cores_in_y + x*cores_in_y + y) + "\t" 
                     #ptrace_header=ptrace_header + "C" + str(x) + "_" + str(y) + "\t" 
     
-    if type_of_stack== "3Dmem" or type_of_stack== "2.5D" or type_of_stack=="2.5D+":
+    if type_of_stack== "3Dmem" or type_of_stack== "2.5D":
         for x in range(0,logic_cores_in_x):
             for y in range(0,logic_cores_in_y):
                 ptrace_header=ptrace_header + "LC_" + str(x*logic_cores_in_y + y) + "\t" 
                 #ptrace_header=ptrace_header + "LC" + str(x) + "_" + str(y) + "\t" 
+        # for x in range(4):
+        #     for y in range((banks_in_x*banks_in_y)//4):
+        #         ptrace_header = ptrace_header + "LC_" + str(y + x*NUM_BANKS//4) + "\t"
     
-    if type_of_stack=="2.5D":
+    if type_of_stack=="3Dmem":
         for x in range(1,4):
             ptrace_header=ptrace_header + "X" + str(x) + "\t" 
 
-    if type_of_stack=="2.5D+":
+    # if type_of_stack=="2.5D":
+    #     for x in range(1,4):
+    #         ptrace_header=ptrace_header + "X" + str(x) + "\t" 
+
+    if type_of_stack=="2.5D":
         for x in range(1,9):
             ptrace_header=ptrace_header + "X" + str(x) + "\t"
                 
@@ -253,12 +266,19 @@ def gen_ptrace_header():
                 #if type_of_stack== "3D" or type_of_stack== "3Dmem" or type_of_stack=="DDR":
                 bank_number = z*banks_in_x*banks_in_y + x*banks_in_y + y
                 ptrace_header=ptrace_header + "B_" + str(bank_number) + "\t" 
-                #ptrace_header=ptrace_header + "B" + str(x) + "_" + str(y) + "\t" 
+    # for bz in range (banks_in_z):
+    #     for bi in range(4):
+    #         for b in range ((banks_in_x*banks_in_y)//4):
+    #             ptrace_header = ptrace_header + "B_" + str(b + (bz*banks_in_x*banks_in_y)//4 + bi*NUM_BANKS//4) + "\t"
+    #             #ptrace_header=ptrace_header + "B" + str(x) + "_" + str(y) + "\t" 
+        # if type_of_stack=="2.5D":
+        #     for x in range(1,4):
+        #         ptrace_header=ptrace_header + "X" + str(x) + "\t" 
         if type_of_stack=="2.5D":
-            for x in range(1,4):
-                ptrace_header=ptrace_header + "X" + str(x) + "\t" 
-        if type_of_stack=="2.5D+":
             for x in range(1,9):
+                ptrace_header=ptrace_header + "X" + str(x) + "\t"
+        if type_of_stack=="3Dmem":
+            for x in range(1,4):
                 ptrace_header=ptrace_header + "X" + str(x) + "\t"
     
     if type_of_stack=="3D":
@@ -484,12 +504,12 @@ class memTherm:
       bank_power_trace[bank] = round(bank_power_trace[bank], 3)
     logic_power_trace = ''
     #create logic_core power array. applicable only for 3Dmem and 2.5D memory
-    if (type_of_stack=="2.5D" or type_of_stack=="3Dmem" or type_of_stack=="2.5D+"):
+    if (type_of_stack=="2.5D" or type_of_stack=="3Dmem"):
         logic_power_trace = [logic_core_power for number in xrange(NUM_LC)]
     power_trace = ''
     # convert power trace into a concatenated string for formated output
     #for 2.5D, read the core power from the core power trace file and include in the total power trace
-    if (type_of_stack == "2.5D" or type_of_stack == "2.5D+"):
+    if (type_of_stack == "2.5D"):
         with open(c_power_trace_file, 'r') as power_file:
             power_file.readline()  # ignore first line that contains the header
             c_power_data=power_file.readline()  # ignore first line that contains the header
@@ -499,31 +519,40 @@ class memTherm:
     for p in logic_power_trace:
         power_trace = power_trace + str(p) + '\t'
     #add X1, X2, X3 to the power trace for 2.5D
-    if (type_of_stack == "2.5D"):
+    # if (type_of_stack == "2.5D"):
+    #     for x in range(1,4):
+    #         power_trace = power_trace + str(0.00) + '\t'
+    if (type_of_stack == "3Dmem"):
         for x in range(1,4):
             power_trace = power_trace + str(0.00) + '\t'
-    if type_of_stack=="2.5D+":
+    if type_of_stack=="2.5D":
         for x in range(1,9):
             power_trace = power_trace + str(0.00) + '\t'
      #add bank power into the main power trace
     for bank in range(len(bank_power_trace)):
             #add 0 power for X1, X2, X3 for 2.5D
+        # if (type_of_stack == "2.5D" and bank%(banks_in_x*banks_in_y)==0 and bank>0):
+        #     power_trace = power_trace + str(0.00) + '\t'
+        #     power_trace = power_trace + str(0.00) + '\t'
+        #     power_trace = power_trace + str(0.00) + '\t'
+        #     #power_trace = power_trace + str(0.00) + '\t'
         if (type_of_stack == "2.5D" and bank%(banks_in_x*banks_in_y)==0 and bank>0):
-            power_trace = power_trace + str(0.00) + '\t'
-            power_trace = power_trace + str(0.00) + '\t'
-            power_trace = power_trace + str(0.00) + '\t'
-            #power_trace = power_trace + str(0.00) + '\t'
-        if (type_of_stack == "2.5D+" and bank%(banks_in_x*banks_in_y)==0 and bank>0):
             for x in range(1,9):
+                power_trace = power_trace + str(0.00) + '\t'
+        if (type_of_stack == "3Dmem" and bank%(banks_in_x*banks_in_y)==0 and bank>0):
+            for x in range(1,4):
                 power_trace = power_trace + str(0.00) + '\t'
         #add bank power trace for all type of memories
         power_trace = power_trace + str(bank_power_trace[bank]) + '\t'
     #add 0 power for X1, X2, X3 for 2.5D at last
+    # if (type_of_stack == "2.5D"):
+    #     for x in range(1,4):
+    #         power_trace = power_trace + str(0.00) + '\t'
     if (type_of_stack == "2.5D"):
-        for x in range(1,4):
-            power_trace = power_trace + str(0.00) + '\t'
-    if (type_of_stack == "2.5D+"):
         for x in range(1,9):
+            power_trace = power_trace + str(0.00) + '\t'
+    if (type_of_stack == "3Dmem"):
+        for x in range(1,4):
             power_trace = power_trace + str(0.00) + '\t'
     c_power_data = ""
       #read core power and add to main power trace at last for 3D
@@ -595,16 +624,43 @@ class memTherm:
         trace_header = trace_header + "C_" + str(x) + "\t"
     for x in range(NUM_BANKS):
         trace_header = trace_header + "B_" + str(x) + "\t"
+    # for bz in range (banks_in_z):
+    #     for bi in range(4):
+    #         for b in range ((banks_in_x*banks_in_y)//4):
+    #             trace_header = trace_header + "B_" + str(b + (bz*banks_in_x*banks_in_y)//4 + bi*NUM_BANKS//4) + "\t"
     return trace_header
 
   # this function merges the separate core and mem trace files or reorders a single core+mem trace file, all to a uniform format
   def format_trace_file(self, skip_header, c_inst_trace_file, inst_trace_file, combined_trace_file, combined_instTrace_file):
-    if (type_of_stack == "DDR" or type_of_stack == "3Dmem"):        #separate mem and core traces are combined
+    # if (type_of_stack == "DDR" or type_of_stack == "3Dmem"):        #separate mem and core traces are combined
+    #     with open(c_inst_trace_file, 'r') as core_data_file:
+    #         if (skip_header):
+    #             core_data_file.readline()  # ignore first line that contains the header
+    #         core_data=core_data_file.readline()  
+    #         core_data = core_data.rstrip()
+    #     core_data_file.close()
+    #     with open(inst_trace_file, 'r') as mem_data_file:
+    #         if (skip_header):
+    #             mem_data_file.readline()  # ignore first line that contains the header
+    #         mem_data=mem_data_file.readline()  
+    #         mem_data=mem_data.rstrip()  
+    #     mem_data_file.close()
+    #     if (type_of_stack == "3Dmem"):      #skip the LC entries for a 3D external memory
+    #         mem_data_split = mem_data.split("\t")
+    #         mem_data_split = mem_data_split[NUM_LC:]
+    #         mem_data = "\t".join(mem_data_split)
+
+
+
+    if (type_of_stack == "3Dmem"):        #separate mem and core traces are combined
         with open(c_inst_trace_file, 'r') as core_data_file:
             if (skip_header):
                 core_data_file.readline()  # ignore first line that contains the header
             core_data=core_data_file.readline()  
             core_data = core_data.rstrip()
+            core_data_split = core_data.split("\t")
+            core_data_split = core_data_split[:NUM_CORES]        #extract core temperatures from the line (first few entries)
+            core_data = "\t".join(core_data_split)
         core_data_file.close()
         with open(inst_trace_file, 'r') as mem_data_file:
             if (skip_header):
@@ -614,8 +670,16 @@ class memTherm:
         mem_data_file.close()
         if (type_of_stack == "3Dmem"):      #skip the LC entries for a 3D external memory
             mem_data_split = mem_data.split("\t")
-            mem_data_split = mem_data_split[NUM_LC:]
+            mem_portion = mem_data_split[NUM_LC+3:]
+            banks_per_layer = banks_in_x*banks_in_y
+            mem_data_split = []
+            for layer in range(banks_in_z):
+                start_index = layer*(banks_per_layer+3)         # +4 corresponds to X1,X2,X3
+                mem_data_split.extend(mem_portion[start_index:start_index+banks_per_layer])
             mem_data = "\t".join(mem_data_split)
+
+
+
     elif (type_of_stack == "3D"):        #reorder core and memory columns in a 3D layout
         with open(inst_trace_file, 'r') as data_file:
             if (skip_header):
@@ -628,24 +692,24 @@ class memTherm:
         core_data = "\t".join(core_data_split)
         mem_data_split = data_split[:NUM_BANKS]         #extract memory temperatures (first few entries)
         mem_data = "\t".join(mem_data_split)
+    # elif (type_of_stack == "2.5D"):
+    #     with open(inst_trace_file, 'r') as data_file:
+    #         if (skip_header):
+    #             data_file.readline()  # ignore first line that contains the header
+    #         data=data_file.readline()  # ignore first line that contains the header
+    #         data=data.rstrip()  
+    #     data_file.close()
+    #     data_split = data.split("\t")
+    #     core_data_split = data_split[:NUM_CORES]        #extract core temperatures from the line (first few entries)
+    #     core_data = "\t".join(core_data_split)
+    #     mem_portion = data_split[NUM_CORES+NUM_LC+3 : ] # skip the first few entries corresponding to cores, LC, and X1, X2, X3
+    #     banks_per_layer = banks_in_x*banks_in_y
+    #     mem_data_split = []
+    #     for layer in range(banks_in_z):
+    #         start_index = layer*(banks_per_layer+3)         # +4 corresponds to X1,X2,X3
+    #         mem_data_split.extend(mem_portion[start_index:start_index+banks_per_layer])
+    #     mem_data = "\t".join(mem_data_split)
     elif (type_of_stack == "2.5D"):
-        with open(inst_trace_file, 'r') as data_file:
-            if (skip_header):
-                data_file.readline()  # ignore first line that contains the header
-            data=data_file.readline()  # ignore first line that contains the header
-            data=data.rstrip()  
-        data_file.close()
-        data_split = data.split("\t")
-        core_data_split = data_split[:NUM_CORES]        #extract core temperatures from the line (first few entries)
-        core_data = "\t".join(core_data_split)
-        mem_portion = data_split[NUM_CORES+NUM_LC+3 : ] # skip the first few entries corresponding to cores, LC, and X1, X2, X3
-        banks_per_layer = banks_in_x*banks_in_y
-        mem_data_split = []
-        for layer in range(banks_in_z):
-            start_index = layer*(banks_per_layer+3)         # +4 corresponds to X1,X2,X3
-            mem_data_split.extend(mem_portion[start_index:start_index+banks_per_layer])
-        mem_data = "\t".join(mem_data_split)
-    elif (type_of_stack == "2.5D+"):
         with open(inst_trace_file, 'r') as data_file:
             if (skip_header):
                 data_file.readline()  # ignore first line that contains the header
